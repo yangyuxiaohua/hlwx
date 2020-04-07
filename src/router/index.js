@@ -12,17 +12,57 @@ const routes = [{
   {
     path: '/index',
     name: 'index',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import( /* webpackChunkName: "about" */ '../views/Index.vue'),
+    component: () => import('../views/Index.vue'),
     children: [{
       path: '/index/home',
-      component: () => import('@/views/index/home/Home')
+      name: 'home',
+      component: () => import('@/views/index/home/Home'),
+      children: [{
+          path: '/index/home/map',
+          name: 'map',
+          component: () => import('@/views/index/home/Map'),
+        },
+        {
+          path: '/index/home/region',
+          name: 'region',
+          component: () => import('@/views/index/home/Region'),
+          // children: [{
+          //   path: '/index/home/region/regionMap',
+          //   name: 'regionMap',
+          //   component: () => import('@/views/index/home/Map')
+          // }]
+        },
+        {
+          path: '/index/home/build',
+          name: 'build',
+          component: () => import('@/views/index/home/Build'),
+          // children: [{
+          //   path: '/index/home/build/buildRegion',
+          //   name: 'buildRegion',
+          //   component: () => import('@/views/index/home/Region')
+          // }]
+        },
+        {
+          path: '/index/home/floor',
+          name: 'floor',
+          component: () => import('@/views/index/home/Floor'),
+          // children: [{
+          //   path: '/index/home/floor/floorBuild',
+          //   name: 'floorBuild',
+          //   component: () => import('@/views/index/home/Build')
+          // }]
+        }
+      ]
     }, {
-      path: '/index/equipment',
-      component: () => import('@/views/index/equipment/Equipment')
-    }, {
+      path: '/index/system', //系统结构
+      name:'system',
+      component: () => import('@/views/index/system/System')
+    }, 
+    {
+      path:'/index/historyRecoding',
+      name:'historyRecoding',
+      component:()=>import('@/views/index/HistoryRecoding')
+    },{
       path: '/index/service',
       component: () => import('@/views/index/service/Service')
     }, {

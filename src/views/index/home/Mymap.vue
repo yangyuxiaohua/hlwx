@@ -23,7 +23,6 @@
       <!-- </div> -->
   </div>
 </template>
-
 <script>
 import BMap from "BMap";
 export default {
@@ -42,12 +41,12 @@ export default {
   },
   methods: {
     baiduMap() {
-      var map = new BMap.Map("allmap", { minZoom: 8, maxZoom: 15 ,enableMapClick:false}); // 创建地图实例
+      var map = new BMap.Map("allmap", { minZoom: 8, maxZoom: 18 ,enableMapClick:false}); // 创建地图实例
       var point = new BMap.Point(116.331398, 39.897445); // 创建点坐标
       map.disableInertialDragging() //禁用惯性拖拽
       map.centerAndZoom(point, 15); // 初始化地图，设置中心点坐标和地图级别
       map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
-      map.setMapStyle({ style: "midnight" }); //地图风格
+      map.setMapStyle({ style: "hardedge" }); //地图风格
       //多个点标注和火警数
       var points = [
         { lng: 116.331398, lat: 39.897445, data: "5" },

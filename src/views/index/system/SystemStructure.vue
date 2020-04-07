@@ -1,10 +1,6 @@
 <template>
   <div class="structureWrapper">
     <!-- 结构图组件 -->
-    <div class="structureTabHeader">
-      <div class="choseTissue chosedStructureTab">组织结构</div>
-      <div class="choseSystem">系统结构</div>
-    </div>
     <div class="structureSearch">
       <el-input placeholder="请输入内容" suffix-icon="el-icon-search" v-model="structureSearch">
       </el-input>
@@ -211,42 +207,42 @@ export default {
   methods: {
     //点击节点
     clickNode(a, b = {}, c) {
-      if (a.url) {
-        if (a.url == "/index/home/floor") {
-          setKey("currentMsg", {
-            allMsg: a,
-            floorMsg: a,
-            buildMsg: b.parent.data,
-            regionMsg: b.parent.parent.data,
-            mapMsg: b.parent.parent.parent.data
-          });
-        } else if (a.url == "/index/home/build") {
-          setKey("currentMsg", {
-            allMsg: a,
-            buildMsg: a,
-            regionMsg: b.parent.data,
-            mapMsg: b.parent.parent.data
-          });
-          setKey("currentMsg", {
-            allMsg: a,
-            buildMsg: a,
-            regionMsg: b.parent.data,
-            mapMsg: b.parent.parent.data
-          });
-        } else if (a.url == "/index/home/region") {
-          setKey("currentMsg", {
-            allMsg: a,
-            regionMsg: a,
-            mapMsg: b.parent.data
-          });
-        } else {
-          setKey("currentMsg", {
-            allMsg: a,
-            mapMsg: a
-          });
-        }
-        this.$router.history.push(a.url);
-      }
+    //   if (a.url) {
+    //     if (a.url == "/index/home/floor") {
+    //       setKey("currentMsg", {
+    //         allMsg: a,
+    //         floorMsg: a,
+    //         buildMsg: b.parent.data,
+    //         regionMsg: b.parent.parent.data,
+    //         mapMsg: b.parent.parent.parent.data
+    //       });
+    //     } else if (a.url == "/index/home/build") {
+    //       setKey("currentMsg", {
+    //         allMsg: a,
+    //         buildMsg: a,
+    //         regionMsg: b.parent.data,
+    //         mapMsg: b.parent.parent.data
+    //       });
+    //       setKey("currentMsg", {
+    //         allMsg: a,
+    //         buildMsg: a,
+    //         regionMsg: b.parent.data,
+    //         mapMsg: b.parent.parent.data
+    //       });
+    //     } else if (a.url == "/index/home/region") {
+    //       setKey("currentMsg", {
+    //         allMsg: a,
+    //         regionMsg: a,
+    //         mapMsg: b.parent.data
+    //       });
+    //     } else {
+    //       setKey("currentMsg", {
+    //         allMsg: a,
+    //         mapMsg: a
+    //       });
+    //     }
+    //     this.$router.history.push(a.url);
+    //   }
       console.log(a, b, c);
     }
   },
@@ -263,26 +259,6 @@ export default {
   margin: 0;
   display: flex;
   flex-direction: column;
-  .structureTabHeader {
-    width: 100%;
-    height: 52px;
-    line-height: 52px;
-    display: flex;
-    .choseTissue,
-    .choseSystem {
-      width: 50%;
-      background-color: #333a3c;
-      border-radius: 18px 18px 0 0;
-      cursor: pointer;
-      color: #d0d0d3;
-      text-align: center;
-      font-size: 20px;
-    }
-    .chosedStructureTab {
-      background-color: #5d616d;
-      color: #ecebef;
-    }
-  }
   .structureSearch {
     width: 100%;
     height: 42px;
@@ -318,8 +294,8 @@ export default {
         & > .el-tree-node {
           & > .el-tree-node__content {
             font-size: 20px;
-            height: 42px;
-            line-height: 42px;
+            height: 62px;
+            line-height: 62px;
             position: relative;
             border-bottom: 1px solid #3b4d5a;
             z-index: 10;
@@ -331,7 +307,7 @@ export default {
           left: -56px;
           top: 0;
           display: inline-block;
-          height: 42px;
+          height: 62px;
           width: 56px;
           display: flex;
           justify-content: center;
@@ -368,8 +344,8 @@ export default {
           color: #a4a5a8;
           .el-tree-node__content {
             position: relative;
-            height: 42px;
-            line-height: 42px;
+            height: 62px;
+            line-height: 62px;
             border-bottom: 1px solid #3b4d5a;
           }
         }

@@ -5,8 +5,12 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
+    curMsg:{}
   },
   mutations: {
+    changeCurMsg(state,msg){
+        state.curMsg = msg
+    }
   },
   actions: {
   },

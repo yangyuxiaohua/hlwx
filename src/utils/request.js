@@ -8,42 +8,51 @@ import axios from 'axios'
 import qs from 'qs'
 
 // 引入本地存储工具函数
-import local from "@/utils/local";
-
+import {
+    getSid
+} from "@/utils/local";
 
 // 按需引入组件
-import { Message } from 'element-ui'
+import {
+    Message
+} from 'element-ui'
+// import { setSid } from './local';
 
 // 设置默认请求的接口地址
-axios.defaults.baseURL = 'http://127.0.0.1:5000'
+axios.defaults.baseURL = 'http://192.168.0.200:3221'
+// axios.defaults.baseURL = 'http://192.168.0.19:2221'
+axios.defaults.timeout = 6000
 
+// axios.defaults.withCredentials=true  //请求跨域的时候是否需要凭证
 // 请求拦截器
 axios.interceptors.request.use(config => {
-    // 在请求发送出去之前 带上一些东西 config是请求的配置对象， 如果直接返回 就等于什么都不带
-
-    // 所有的axios请求，在请求发送出去之前 带上token
-    let token = local.get('token')
-    config.headers.Authorization = 'Bearer ' + token
-
-    return config;
+    // 所有的axios请求，在请求发送出去之前 带上sid
+    if (sessionStorage.sid) {
+        config.headers['sid'] = getSid() // 让每个请求携带自定义
+    }
+    //   console.log('请求拦截器',config)
+    return config
 }, error => {
     return Promise.reject(error); // 请求错误处理
 })
 
 // 响应拦截器
 axios.interceptors.response.use(response => {
-    // response就是后端响应回来的东西 如果你想做什么统一的处理 可以在这里写
-    let { code, msg } = response.data;
-    // 成功
-    if (code === 0) {
-        Message({
-            type: 'success',
-            message: msg
-        })
-    } else if (code === 1) {
-        // 失败
-        Message.error(msg)
-    }
+    // let {
+    //     code,
+    //     msg
+    // } = response.data;
+    // // 成功
+    // if (code === 0) {
+    //     Message({
+    //         type: 'success',
+    //         message: msg
+    //     })
+    // } else if (code === 1) {
+    //     // 失败
+    //     Message.error(msg)
+    // }
+    // console.log("响应拦截器",response)
     return response;
 
 }, error => {
@@ -56,7 +65,9 @@ axios.interceptors.response.use(response => {
 export default {
     get(url, params = {}) {
         return new Promise((resolve, reject) => {
-            axios.get(url, { params })
+            axios.get(url, {
+                    params
+                })
                 .then(res => {
                     resolve(res.data)
                 })
@@ -65,15 +76,35 @@ export default {
                 })
         })
     },
-    post(url, params = {}) {
-        return new Promise((resolve, reject) => {
-            axios.post(url, qs.stringify(params))
-                .then(res => {
-                    resolve(res.data)
-                })
-                .catch(err => {
-                    reject(err)
-                })
-        })
+    post(url, params = {}, type) {
+        if (type == 'json') {
+            axios.defaults.headers = {
+                'Content-type': 'application/json' //设置请求参数格式
+            }
+            return new Promise((resolve, reject) => {
+                axios.post(url, params,type)
+                    .then(res => {
+                        resolve(res.data)
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            })
+            
+        } else {
+            axios.defaults.headers = {
+                'Content-type': 'application/x-www-form-urlencoded' //设置请求参数格式
+            }
+            return new Promise((resolve, reject) => {
+                axios.post(url, qs.stringify(params),type)
+                    .then(res => {
+                        resolve(res.data)
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            })
+        }
     }
+    // 511132199509151412        18425863241
 }

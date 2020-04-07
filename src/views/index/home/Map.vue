@@ -1,53 +1,183 @@
 <template>
-    <div>
-        <!-- <div id="BmapContainer"></div>
-        <div id="box"><Imgview style="width:100%;height:100%;position:absolute;" :imgUrl="imgUrl" background="#f2f2f2"></Imgview></div>
-        <div id="box1"> 
-         </div> -->
-       
-
+  <div id="mapbox">
+    <div class="videoWidget">
+      <div class="WidgetVBox">
+        <img src="../../../assets/imgs/03.png" alt="" class="littleImg">
+      </div>
     </div>
+    <!-- 视频小窗口 -->
+    <!-- <div class="videoWidget">
+      <div class="WidgetVBox">
+        <img src="../../../assets/imgs/03.png" alt="" class="littleImg">
+      </div>
+    </div> -->
+    <!-- <div> -->
+    <!-- <Pictureframe> -->
+    <!-- <template #imgbox> -->
+    <div id="allmap"></div>
+    <!-- <select id="stylelist">
+                          <option value="normal">默认地图样式</option> 
+                          <option value="light">清新蓝风格</option> 
+                          <option value="dark">黑夜风格</option>    
+                          <option value="redalert">红色警戒风格</option>
+                          <option value="googlelite">精简风格</option>
+                          <option value="grassgreen">自然绿风格</option>
+                          <option value="midnight">午夜蓝风格</option>
+                          <option value="pink">浪漫粉风格</option>
+                          <option value="darkgreen">青春绿风格</option>
+                          <option value="bluish">清新蓝绿风格</option>
+                          <option value="grayscale">高端灰风格</option>
+                          <option value="hardedge">强边界风格</option> 
+                     </select>  -->
+    <!-- </template> -->
+    <!-- </Pictureframe> -->
+    <!-- </div> -->
+  </div>
 </template>
-
 <script>
-// import Imgview from "../../components/Imgview";
+import BMap from "BMap";
+import styleJson from "../../../../public/static/bmap/custom_map_config.json";
+import { getKey } from "@/utils/local";
+import { getObjStr } from "@/utils/publictool";
+import { setTimeout, setInterval } from "timers";
+// let timer;
 export default {
-  components: {
-    // Imgview,
-  },
+  components: {},
   data() {
     return {
-      // imgUrl: require("../../assets/imgs/01.png")
+      points: [
+        { lng: 116.331369, lat: 39.85632, data: "5" },
+        { lng: 117, lat: 31, data: "9" },
+        { lng: 116, lat: 34, data: "7" }
+      ],
+      lng: 104.071096,
+      lat: 30.572925,
+      showPolyonList: []
     };
   },
+  created() {
+    // console.log(getKey("currentMsg").mapMsg);
+    // console.log(styleJson);
+    // if (
+    //   getKey("currentMsg").mapMsg.points &&
+    //   getKey("currentMsg").mapMsg.points !== "null"
+    // ) {
+    //   let { lat, lon, points } = getKey("currentMsg").mapMsg;
+    //   this.showPolyonList = getObjStr(points);
+    //   this.lat = this.showPolyonList[0].lat;
+    //   this.lng = this.showPolyonList[0].lng;
+    // }
+    // console.log(getKey("currentMsg"))
+    if (
+      getKey("currentMsg").mapMsg.points &&
+      getKey("currentMsg").mapMsg.points !== "null"
+    ) {
+      this.showPolyonList = getObjStr(getKey("currentMsg").mapMsg.points);
+      this.lat = this.showPolyonList[0].lat;
+      this.lng = this.showPolyonList[0].lng;
+    }
+  },
   mounted() {
-    // this.$nextTick(() => {
-    //   // 百度地图
-    //   var map = new BMap.Map("BmapContainer"); // 创建Map实例
-    //   map.centerAndZoom(new BMap.Point(104.06, 30.67), 11); // 初始化地图,设置中心点坐标和地图级别
-    //   //添加地图类型控件
+    this.baiduMap();
+  },
+  methods: {
+    baiduMap() {
+      var map = new BMap.Map("allmap", {
+        minZoom: 8,
+        maxZoom: 18,
+        enableMapClick: false
+      }); // 创建地图实例
+      var point = new BMap.Point(this.lng, this.lat); // 创建点坐标
+      map.disableInertialDragging(); //禁用惯性拖拽
+      map.centerAndZoom(point, 15); // 初始化地图，设置中心点坐标和地图级别
+      map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
+      // map.setMapStyle({ style: "dark" }); //地图风格
+      map.setMapStyleV2({ styleJson: styleJson });
 
-    //   map.setCurrentCity("成都"); // 设置地图显示的城市 此项是必须设置的
-    //   map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
-    // });
+      //多个点标注和火警数
+      var points = [
+        { lng: 104.05, lat: 30.6, data: "5" },
+        { lng: 104.04, lat: 30.5, data: "9" },
+        { lng: 104.03, lat: 30.4, data: "7" }
+      ];
+
+      var opts = {
+        width: 250, // 信息窗口宽度
+        height: 80, // 信息窗口高度
+        title: "信息窗口", // 信息窗口标题
+        enableMessage: true //设置允许信息窗发送短息
+      };
+
+      // 创建标注对象并添加到地图
+      for (var i = 0, pointsLen = points.length; i < pointsLen; i++) {
+        var point = new BMap.Point(points[i].lng, points[i].lat);
+        var marker = new BMap.Marker(point);
+        var label = new BMap.Label(points[i].data, {
+          offset: new BMap.Size(5, 4)
+        });
+        label.setStyle({
+          background: "none",
+          color: "#fff",
+          border: "none" //只要对label样式进行设置就可达到在标注图标上显示数字的效果
+        });
+        marker.setLabel(label); //显示地理名称 a
+        var content = points[i].data; //信息窗口信息
+        map.addOverlay(marker);
+        addClickHandler(content, marker);
+      }
+      function addClickHandler(content, marker) {
+        marker.addEventListener("click", function(e) {
+          openInfo(content, e);
+        });
+      }
+      function openInfo(content, e) {
+        var p = e.target;
+        var point = new BMap.Point(p.getPosition().lng, p.getPosition().lat);
+        var infoWindow = new BMap.InfoWindow(content, opts); // 创建信息窗口对象
+        map.openInfoWindow(infoWindow, point); //开启信息窗口
+      }
+      //创建多边形
+      var polygon = new BMap.Polygon(
+        this.showPolyonList.map(item => {
+          return new BMap.Point(item.lng, item.lat);
+        }),
+        { strokeColor: "blue", strokeWeight: 2, strokeOpacity: 0.5 }
+      );
+
+      map.addOverlay(polygon);
+    }
+  },
+  destroyed() {
+    // timer=null
   }
 };
 </script>
 
 <style lang="less" scoped>
-#BmapContainer {
-  width: 300px;
-  height: 300px;
-  //   margin: 100px 200px;
-  border: 1px solid gray;
-}
-#box {
-  width: 400px;
-  height: 400px;
+#mapbox {
+  width: 100%;
+  height: 100%;
   position: relative;
-}
-#box1{
-width: 400px;
-  height: 400px;
+  #allmap {
+    width: 100%;
+    height: 100%;
+  }
+  .videoWidget {
+    width: 355px;
+    height: 270px;
+    position: absolute;
+    left: -355px;
+    // background-color: #fff;
+    top: 446px;
+    .WidgetVBox {
+      width: 100%;
+      height: 100%;
+      // background-color: red;
+    }
+    .littleImg {
+      width: 100%;
+      height: 100%;
+    }
+  }
 }
 </style>
