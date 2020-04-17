@@ -1,45 +1,53 @@
 <template>
-    <div class="historyRecodingWrapper">
-        <div class="historyRecodingLists">
-            <div class="historyRecodingListsTit">
-                <h2>历史记录</h2>
-            </div>
-            <div class="historyRecodingListsContainer">
-                <div class="historyRecodingHeader">
-                    <div class="historyRecoding">
-                        <span class="deviceName">设备名称</span>
-                        <span class="eventType">状态</span>
-                        <span class="alarmTime">报警时间</span>
-                        <span class="acceptTime">接警时间</span>
-                        <span class="restoreTime">复位时间</span>
-                        <span class=" isResult">处理状态</span>
-                        <span class="is_need_alarm">接警操作</span>
-                    </div>
-                </div>
-                <div class="historyRecodingContainer">
-                    <div class="historyRecoding" v-for="(item,index) in historyList" :key="index">
-                        <span class="deviceName">{{item.deviceName}}</span>
-                        <span class="eventType">{{item.eventType}}</span>
-                        <span class="alarmTime">{{item.alarmTime}}</span>
-                        <span class="acceptTime">{{item.acceptTime}}</span>
-                        <span class="restoreTime">{{item.restoreTime}}</span>
-                        <span class=" isResult">{{item.isResult}}</span>
-                        <span class="is_need_alarm">{{item.isNeedAlarm}}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="historyRecodingListsPaging">
-                <el-pagination background layout="prev, pager, next" :total="historyTotal" :pager-count="pageCount" :page-size='historyCurrentNum' :current-page.sync='historyCurrentPage' @current-change='getHistoryList'>
-                </el-pagination>
-                <el-button type='primary' size="mini">退出</el-button>
-            </div>
+  <div class="historyRecodingWrapper">
+    <div class="historyRecodingLists">
+      <div class="historyRecodingListsTit">
+        <h2>历史记录</h2>
+      </div>
+      <div class="historyRecodingListsContainer">
+        <div class="historyRecodingHeader">
+          <div class="historyRecoding">
+            <span class="deviceName">设备名称</span>
+            <span class="eventType">状态</span>
+            <span class="alarmTime">报警时间</span>
+            <span class="acceptTime">接警时间</span>
+            <span class="restoreTime">复位时间</span>
+            <span class=" isResult">处理状态</span>
+            <span class="is_need_alarm">接警操作</span>
+          </div>
         </div>
+        <div class="historyRecodingContainer">
+          <div class="historyRecoding" v-for="(item,index) in historyList" :key="index">
+            <span class="deviceName">{{item.deviceName}}</span>
+            <span class="eventType">{{item.eventType}}</span>
+            <span class="alarmTime">{{item.alarmTime}}</span>
+            <span class="acceptTime">{{item.acceptTime}}</span>
+            <span class="restoreTime">{{item.restoreTime}}</span>
+            <span class=" isResult">{{item.isResult}}</span>
+            <span class="is_need_alarm">
+              <el-button type="primary" size="mini" v-show="item.isNeedAlarmNo">不需要</el-button>
+              <el-button type="danger" size="mini" v-show="item.isNeedAlarm">接警</el-button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="historyRecodingListsPaging">
+        <el-pagination background layout="prev, pager, next" :total="historyTotal" :pager-count="pageCount" :page-size='historyCurrentNum' :current-page.sync='historyCurrentPage' @current-change='getHistoryList'>
+        </el-pagination>
+        <el-button type='primary' @click="returnPrevious()">退出</el-button>
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
-import { pageHistoryAlarmRecord } from "@/apis/historyRecoding";
-import { getTime } from "@/utils/publictool";
+import {
+  pageHistoryAlarmRecord,
+  pageIotAlarmHistoryRecord
+} from "@/apis/historyRecoding";
+import { getTime, inDexOfStr } from "@/utils/publictool";
+import { getKey } from "@/utils/local";
+
 export default {
   data() {
     return {
@@ -48,87 +56,147 @@ export default {
       pageCount: 5,
       historyCurrentNum: 10,
       historyCurrentPage: 1,
-      historyList: []
+      historyList: [],
+      // isNeedAlarm: false, // 接警
+      // isNeedAlarmNo: false
     };
   },
   created() {
+    console.log(inDexOfStr(getKey("url"), "waterWarning"));
     this.getHistoryList(this.historyCurrentPage);
+    console.log(getKey("url"));
   },
   methods: {
     getHistoryList(val) {
-      val = val <= 0 ? 1 : val;
-      pageHistoryAlarmRecord({ index: val, size: this.historyCurrentNum })
-        .then(res => {
-          if (res.httpStatus == 200) {
-            this.historyTotal = res.result.countRows;
-            this.historyList = res.result.result.map(item => {
-              let eventType = "";
-              switch (item.eventType) {
-                case 64:
-                  eventType = "状态";
-                  break;
-                case 10:
-                  eventType = "屏蔽";
-                  break;
-                case 2:
-                  eventType = "火警";
-                  break;
-                case 4:
-                  eventType = "监管";
-                  break;
-                case 32:
-                  eventType = "故障";
-                  break;
-                case 8:
-                  eventType = "启动";
-                  break;
-                case 12:
-                  eventType = "反馈";
-                  break;
-                case 15:
-                  eventType = "延时";
-                  break;
-                default:
-                  eventType = "复位";
-              }
-              return {
-                deviceName: item.deviceName,
-                eventType: eventType,
-                alarmTime: getTime(item.alarmTime),
-                acceptTime: getTime(item.acceptTime),
-                restoreTime: getTime(item.restoreTime),
-                isResult: item.isResult == 1 ? "已处理" : "未处理",
-                isNeedAlarm: item.isNeedAlarm == 1 ? "需要" : "不需要"
-              };
+      if (
+        inDexOfStr(getKey("url"), "home") ||
+        inDexOfStr(getKey("url"), "systemStatistical")
+      ) {
+        pageHistoryAlarmRecord({ index: val, size: this.historyCurrentNum })
+          .then(res => {
+            if (res.httpStatus == 200) {
+              this.historyTotal = res.result.countRows;
+              this.historyList = res.result.result.map(item => {
+                let eventType = "";
+                switch (item.eventType) {
+                  case 64:
+                    eventType = "状态";
+                    break;
+                  case 10:
+                    eventType = "屏蔽";
+                    break;
+                  case 2:
+                    eventType = "火警";
+                    break;
+                  case 4:
+                    eventType = "监管";
+                    break;
+                  case 32:
+                    eventType = "故障";
+                    break;
+                  case 8:
+                    eventType = "启动";
+                    break;
+                  case 12:
+                    eventType = "反馈";
+                    break;
+                  case 15:
+                    eventType = "延时";
+                    break;
+                  default:
+                    eventType = "复位";
+                }
+                if (item.isNeedAlarm == 1) {
+                  this.isNeedAlarm = true;
+                  this.isNeedAlarmNo = false;
+                } else {
+                  this.isNeedAlarmNo = true;
+                  this.isNeedAlarm = false;
+                }
+                return {
+                  deviceName: item.deviceName,
+                  eventType: eventType,
+                  alarmTime: getTime(item.alarmTime),
+                  acceptTime: getTime(item.acceptTime),
+                  restoreTime: getTime(item.restoreTime),
+                  isResult: item.isResult == 1 ? "已处理" : "未处理"
+                  // isNeedAlarm: item.isNeedAlarm == 1 ? "需要" : "不需要"
+                };
+              });
+            }
+          })
+          .catch(err => {
+            //   console.log(err);
+            this.$message({
+              type: "warning",
+              message: "网络请求失败"
             });
-            console.log(this.historyList);
-          }
-        })
-        .catch(err => {
-          //   console.log(err);
-          this.$message({
-            type: "warning",
-            message: "网络请求失败"
           });
-        });
+      } else if (inDexOfStr(getKey("url"), "waterWarning")) {
+        pageIotAlarmHistoryRecord({ index: val, size: this.historyCurrentNum })
+          .then(res => {
+            console.log(res);
+            if (res.httpStatus == 200) {
+              this.historyTotal = res.result.countRows;
+              this.historyList = res.result.result.map(item => {
+                let eventType = "";
+                switch (item.eventType) {
+                  case 64:
+                    eventType = "状态";
+                    break;
+                  case 10:
+                    eventType = "屏蔽";
+                    break;
+                  case 2:
+                    eventType = "火警";
+                    break;
+                  case 4:
+                    eventType = "监管";
+                    break;
+                  case 32:
+                    eventType = "故障";
+                    break;
+                  case 8:
+                    eventType = "启动";
+                    break;
+                  case 12:
+                    eventType = "反馈";
+                    break;
+                  case 15:
+                    eventType = "延时";
+                    break;
+                  default:
+                    eventType = "复位";
+                }
+                // if (item.isNeedAlarm == 1) {
+                //   this.isNeedAlarm = true;
+                //   this.isNeedAlarmNo = false;
+                // } else {
+                //   this.isNeedAlarmNo = true;
+                //   this.isNeedAlarm = false;
+                // }
+                return {
+                  deviceName: item.deviceName,
+                  eventType: eventType,
+                  alarmTime: getTime(item.alarmTime),
+                  acceptTime: getTime(item.acceptTime),
+                  restoreTime: getTime(item.restoreTime),
+                  isResult: item.isResult == 1 ? "已处理" : "未处理",
+                  isNeedAlarm: item.isNeedAlarm == 1 ? true : false,
+                  isNeedAlarmNo: item.isNeedAlarm == 1 ? false : true
+                  // isNeedAlarm: item.isNeedAlarm == 1 ? "需要" : "不需要"
+                };
+              });
+            }
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+    },
+    returnPrevious() {
+      this.$router.history.push(getKey("url"));
     }
-    //  roleCurrentChange(val) {
-    //   val = val <= 0 ? 1 : val;
-    //   console.log(val);
-    //   listPublicRoleIncludeUnable({
-    //     system: getKey("userInfor".system)
-    //   })
-    //     .then(res => {
-    //       if (res.httpStatus == 200) {
-    //         this.roleTotal = res.result.length;
-    //         console.log(this.roleTotal)
-    //         this.roleList = res.result.slice(this.roleCurrentNum*(val-1),this.roleCurrentNum*val)
-    //       }
-    //     })
-    //     .catch(err => {
-    //       console.log(err);
-    //     });
-    // },
   }
 };
 </script>
@@ -198,7 +266,6 @@ export default {
       }
     }
     .historyRecodingListsPaging {
-      height: 60px;
       display: flex;
       justify-content: space-around;
     }

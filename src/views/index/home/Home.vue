@@ -71,7 +71,7 @@
             <div class="time">{{item.time}}</div>
             <div class="equip">{{item.equip}}</div>
             <div class="coding">{{item.coding}}</div>
-            <div class="control">{{item.control}}</div>
+            <div class="control">{{item.deviceUnitName}}</div>
             <div class="position">{{item.position}}</div>
             <div class="test">{{item.test}}</div>
             <div class="look">
@@ -79,7 +79,8 @@
               <img src="../../../assets/imgs/cameraIcon.png" alt="" @click="onCamera(item.cameraUrl)">
             </div>
             <div class="handle">
-              <el-button type="danger" size="mini">接警</el-button>
+              <el-button type="danger" size="mini" v-show="item.isNeedAlarm">接警</el-button>
+              <el-button type="primary" size="mini" v-show="item.isNeedAlarmNo">不需要</el-button>
             </div>
           </div>
         </div>
@@ -112,7 +113,7 @@
         </div>
         <div class="firstFireContainer" v-show="showFirstFire">
           <div class="build">
-            <span class="firstFireInforTit">建筑</span>
+            <span class="firstFireInforTit">时间</span>
             <span>{{firstFire.alarmTime}}</span>
           </div>
           <div class="position">
@@ -166,12 +167,42 @@ export default {
       showMessageContainer: false,
       unitInforList: [
         //单位信息列表
-        { icon: require('@/assets/imgs/建筑.png'), name: "建筑", num: 5, status: 0 },
-        { icon: require("@/assets/imgs/重点部位.png"), name: "重点部位", num: 37, status: 0 },
-        { icon: require("@/assets/imgs/微型消防站.png"), name: "微型消防站", num: 4, status: 0 },
-        { icon: require("@/assets/imgs/消防通道.png"), name: "消防通道", num: 12, status: 0 },
-        { icon: require("@/assets/imgs/消防员.png"), name: "消防员", num: 55, status: 0 },
-        { icon: require("@/assets/imgs/消防车.png"), name: "消防车", num: 5, status: 0 }
+        {
+          icon: require("@/assets/imgs/建筑.png"),
+          name: "建筑",
+          num: 5,
+          status: 0
+        },
+        {
+          icon: require("@/assets/imgs/重点部位.png"),
+          name: "重点部位",
+          num: 37,
+          status: 0
+        },
+        {
+          icon: require("@/assets/imgs/微型消防站.png"),
+          name: "微型消防站",
+          num: 4,
+          status: 0
+        },
+        {
+          icon: require("@/assets/imgs/消防通道.png"),
+          name: "消防通道",
+          num: 12,
+          status: 0
+        },
+        {
+          icon: require("@/assets/imgs/消防员.png"),
+          name: "消防员",
+          num: 55,
+          status: 0
+        },
+        {
+          icon: require("@/assets/imgs/消防车.png"),
+          name: "消防车",
+          num: 5,
+          status: 0
+        }
       ],
       //报警数组
       warningInforList: [],
@@ -182,12 +213,16 @@ export default {
       showNoFirstFire: true,
       firstFire: {},
       timer: null
+      // isNeedAlarm: false, // 接警
+      // isNeedAlarmNo: false
     };
   },
   created() {
     this.getFirstFire(this.firstFireCurrent);
-    this.getListRealTimeAlarmRecord()
+    this.getListRealTimeAlarmRecord();
+    // console.log(this.warningInforList)
   },
+  //  data: ["通讯故障", "电器故障", "机械故障", "软件故障", "其他故障"]
   mounted() {
     // 定时查询首火警信息
     let that = this;
@@ -221,8 +256,8 @@ export default {
               this.maxNum = res.result.pageNum;
             }
           } else {
-             this.showFirstFire = false;
-              this.showNoFirstFire = true;
+            this.showFirstFire = false;
+            this.showNoFirstFire = true;
             this.$message({
               type: "warning",
               message: "网络请求失败"
@@ -235,7 +270,10 @@ export default {
     },
     // 查看摄像头
     onCamera(url) {
-      console.log(url);
+      // "hlwxPlay:" + url;
+      // console.log("hlwxPlay://" + url);
+      // window.location.href("hlwxPlay://" + url)
+      location.href="hlwxPlay://" + url
     },
     //查询时时报警
     getListRealTimeAlarmRecord() {
@@ -273,6 +311,17 @@ export default {
                 default:
                   eventType = "复位";
               }
+              // console.log(item.isNeedAlarm)
+              // if (item.isNeedAlarm == 1) {
+              //     this.isNeedAlarm = true;
+              //     this.isNeedAlarmNo = false;
+              //     console.log(11111111)
+              //   } else {
+              //     this.isNeedAlarmNo = true;
+              //     this.isNeedAlarm = false;
+              //     console.log(22222222222)
+
+              //   }
               return {
                 serialNum: index + 1,
                 time: getTime(item.alarmTime),
@@ -281,7 +330,10 @@ export default {
                 control: "",
                 position: item.floorName + item.position,
                 test: item.isTest == 1 ? "是" : "否",
-                cameraUrl: item.cameraUrl
+                cameraUrl: item.cameraUrl,
+                deviceUnitName: item.deviceUnitName,
+                isNeedAlarm: item.isNeedAlarm == 1 ? true : false,
+                isNeedAlarmNo: item.isNeedAlarm == 1 ? false : true
               };
             });
           } else {
@@ -295,12 +347,12 @@ export default {
           console.log(err);
         });
     },
-    // 三途合一
+    // 三图合一
     changeImg() {
-      console.log(getKey("currentMsg"));
+      // console.log(getKey("currentMsg"));
       if (getKey("currentMsg")) {
         if (getKey("currentMsg").floorMsg) {
-          console.log("当前在楼层");
+          // console.log("当前在楼层");
           this.$router.history.push("/index/home/build");
           let { allMsg, buildMsg, regionMsg, mapMsg } = getKey("currentMsg");
           setKey("currentMsg", {
@@ -317,7 +369,7 @@ export default {
             regionMsg: regionMsg,
             mapMsg: mapMsg
           });
-          console.log("当前在楼栋");
+          // console.log("当前在楼栋");
         } else if (getKey("currentMsg").regionMsg) {
           this.$router.history.push("/index/home/map");
           let { allMsg, mapMsg } = getKey("currentMsg");
@@ -325,9 +377,9 @@ export default {
             allMsg: mapMsg,
             mapMsg: mapMsg
           });
-          console.log("当前在分区");
+          // console.log("当前在分区");
         } else {
-          console.log("当前在地图");
+          // console.log("当前在地图");
         }
       }
     }
@@ -347,8 +399,9 @@ export default {
     flex: 0 0 355px;
     .structure {
       width: 100%;
-      height: 446px;
+      height: 394px;
       background-color: #272e30;
+      margin-top: 52px;
     }
     .thumbnail {
       width: 100%;
@@ -426,7 +479,7 @@ export default {
               display: flex;
               justify-content: center;
               align-items: center;
-              img{
+              img {
                 width: 22px;
                 height: 23px;
               }
@@ -500,6 +553,7 @@ export default {
           }
           .control {
             width: 106px;
+            overflow: hidden;
           }
           .position {
             flex: 1;

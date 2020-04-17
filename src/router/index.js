@@ -1,6 +1,9 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Login from '../views/Login.vue'
+import {
+  setKey
+} from '@/utils/local'
 
 Vue.use(VueRouter)
 
@@ -12,73 +15,82 @@ const routes = [{
   {
     path: '/index',
     name: 'index',
-    component: () => import('../views/Index.vue'),
+    component: () => import('@/views/Index.vue'),
     children: [{
-      path: '/index/home',
-      name: 'home',
-      component: () => import('@/views/index/home/Home'),
-      children: [{
-          path: '/index/home/map',
-          name: 'map',
-          component: () => import('@/views/index/home/Map'),
-        },
-        {
-          path: '/index/home/region',
-          name: 'region',
-          component: () => import('@/views/index/home/Region'),
-          // children: [{
-          //   path: '/index/home/region/regionMap',
-          //   name: 'regionMap',
-          //   component: () => import('@/views/index/home/Map')
-          // }]
-        },
-        {
-          path: '/index/home/build',
-          name: 'build',
-          component: () => import('@/views/index/home/Build'),
-          // children: [{
-          //   path: '/index/home/build/buildRegion',
-          //   name: 'buildRegion',
-          //   component: () => import('@/views/index/home/Region')
-          // }]
-        },
-        {
-          path: '/index/home/floor',
-          name: 'floor',
-          component: () => import('@/views/index/home/Floor'),
-          // children: [{
-          //   path: '/index/home/floor/floorBuild',
-          //   name: 'floorBuild',
-          //   component: () => import('@/views/index/home/Build')
-          // }]
-        }
-      ]
-    }, {
-      path: '/index/system', //系统结构
-      name:'system',
-      component: () => import('@/views/index/system/System')
-    }, 
-    {
-      path:'/index/historyRecoding',
-      name:'historyRecoding',
-      component:()=>import('@/views/index/HistoryRecoding')
-    },{
-      path: '/index/service',
-      component: () => import('@/views/index/service/Service')
-    }, {
-      path: '/index/statistical',
-      component: () => import('@/views/index/statistical/Statistical')
-    }, ]
+        path: '/index/home',
+        name: 'home',
+        component: () => import('@/views/index/home/Home'),
+        children: [{
+            path: '/index/home/map',
+            name: 'map',
+            component: () => import('@/views/index/home/Map'),
+          },
+          {
+            path: '/index/home/region',
+            name: 'region',
+            component: () => import('@/views/index/home/Region'),
+          },
+          {
+            path: '/index/home/build',
+            name: 'build',
+            component: () => import('@/views/index/home/Build'),
+          },
+          {
+            path: '/index/home/floor',
+            name: 'floor',
+            component: () => import('@/views/index/home/Floor'),
+          }
+        ]
+      }, {
+        path: '/index/system', //系统结构
+        name: 'system',
+        component: () => import('@/views/index/system/System'),
+
+        children: [{
+            path: '/index/system/systemStatistical',
+            name: 'systemStatistical',
+            component: () => import('@/views/index/system/SystemStatistical')
+          },
+          {
+            path: '/index/system/WaterWarning',
+            name: 'WaterWarning',
+            component: () => import('@/views/index/system/WaterWarning')
+          }
+        ]
+      },
+      {
+        path: '/index/historyRecoding',
+        name: 'historyRecoding',
+        component: () => import('@/views/index/HistoryRecoding')
+      },
+      // {
+      //   path: '/index/service',
+      //   component: () => import('@/views/index/service/Service')
+      // },
+      // {
+      //   path: '/index/statistical',
+      //   component: () => import('@/views/index/statistical/Statistical')
+      // },
+    ]
   },
   {
     path: '*',
     name: 404,
-    component: () => import('../views/404.vue')
+    component: () => import('@/views/404.vue')
   }
 ]
 
 const router = new VueRouter({
   routes
+})
+
+
+// 路由拦截，路由守卫
+router.beforeEach((to, from, next) => {
+  if (to.path == '/index/historyRecoding' && from.path != '/') {
+    setKey('url', from.path)
+  }
+  next()
 })
 
 export default router

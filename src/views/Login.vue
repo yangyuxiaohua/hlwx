@@ -95,7 +95,7 @@ export default {
                   // console.log(res);
                   if (res.httpStatus == 200) {
                     setKey("userInfor", res.result);
-                    this.$router.history.push("/index/home");
+                    this.$router.history.push("/index/home/map");
                   }
                 })
                 .catch(err => {

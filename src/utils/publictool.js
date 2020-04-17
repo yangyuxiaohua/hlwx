@@ -75,11 +75,32 @@ export function getTime(time) {
 // 检验某个字符串是否包含某个字段
 export function inDexOfStr(str, s) {
     if (str.indexOf(s) != -1) {
-        // return true
-        console.log(1111)
+        return true
     } else {
-        // return false
-        console.log(2222)
-        
+        return false
     }
+}
+ //射线法理论判断点是否在多边形区域内
+export function isDotInPolygon(point, polygonPoints) {
+  var flag = false,
+    p1,
+    p2;
+  for (
+    var i = 0, j = polygonPoints.length - 1;
+    i < polygonPoints.length;
+    j = i++
+  ) {
+    p1 = polygonPoints[i];
+    p2 = polygonPoints[j];
+    // 这里判断是否刚好被测点在多边形的边上
+    // if (isDotInLineSegment(point, p1, p2)) return true;
+    if (
+      p1.y > point.y != p2.y > point.y &&
+      point.x < (point.y - p1.y) * (p1.x - p2.x) / (p1.y - p2.y) + p1.x
+    ) {
+      flag = !flag;
+    }
+  }
+//   console.log(flag)
+  return flag;
 }

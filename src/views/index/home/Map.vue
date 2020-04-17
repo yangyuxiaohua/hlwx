@@ -5,42 +5,16 @@
         <img src="../../../assets/imgs/03.png" alt="" class="littleImg">
       </div>
     </div>
-    <!-- 视频小窗口 -->
-    <!-- <div class="videoWidget">
-      <div class="WidgetVBox">
-        <img src="../../../assets/imgs/03.png" alt="" class="littleImg">
-      </div>
-    </div> -->
-    <!-- <div> -->
-    <!-- <Pictureframe> -->
-    <!-- <template #imgbox> -->
     <div id="allmap"></div>
-    <!-- <select id="stylelist">
-                          <option value="normal">默认地图样式</option> 
-                          <option value="light">清新蓝风格</option> 
-                          <option value="dark">黑夜风格</option>    
-                          <option value="redalert">红色警戒风格</option>
-                          <option value="googlelite">精简风格</option>
-                          <option value="grassgreen">自然绿风格</option>
-                          <option value="midnight">午夜蓝风格</option>
-                          <option value="pink">浪漫粉风格</option>
-                          <option value="darkgreen">青春绿风格</option>
-                          <option value="bluish">清新蓝绿风格</option>
-                          <option value="grayscale">高端灰风格</option>
-                          <option value="hardedge">强边界风格</option> 
-                     </select>  -->
-    <!-- </template> -->
-    <!-- </Pictureframe> -->
-    <!-- </div> -->
   </div>
 </template>
 <script>
 import BMap from "BMap";
+// import BMapLib from "BMapLib";
 import styleJson from "../../../../public/static/bmap/custom_map_config.json";
-import { getKey } from "@/utils/local";
+import { getKey, setKey } from "@/utils/local";
 import { getObjStr } from "@/utils/publictool";
 import { setTimeout, setInterval } from "timers";
-// let timer;
 export default {
   components: {},
   data() {
@@ -52,22 +26,14 @@ export default {
       ],
       lng: 104.071096,
       lat: 30.572925,
-      showPolyonList: []
+      showPolyonList: [],
+      fillColor: "#00C1FF",
+      timer: null,
+      polygon: {}, //创建多边形
+      map: {}
     };
   },
   created() {
-    // console.log(getKey("currentMsg").mapMsg);
-    // console.log(styleJson);
-    // if (
-    //   getKey("currentMsg").mapMsg.points &&
-    //   getKey("currentMsg").mapMsg.points !== "null"
-    // ) {
-    //   let { lat, lon, points } = getKey("currentMsg").mapMsg;
-    //   this.showPolyonList = getObjStr(points);
-    //   this.lat = this.showPolyonList[0].lat;
-    //   this.lng = this.showPolyonList[0].lng;
-    // }
-    // console.log(getKey("currentMsg"))
     if (
       getKey("currentMsg").mapMsg.points &&
       getKey("currentMsg").mapMsg.points !== "null"
@@ -79,20 +45,44 @@ export default {
   },
   mounted() {
     this.baiduMap();
+    let that = this;
+
+    that.changefillColor();
+    this.timer = setInterval(() => {
+      getKey("terrMsg").forEach(item => {
+        item.children.forEach(u => {
+          u.children.forEach(s => {
+            if (s.fireNum != getKey("currentMsg").mapMsg.fireNum) {
+              if (s.fireNum > 0) {
+                that.drawPolygon1();
+              } else {
+                that.drawPolygon2();
+              }
+              setKey("currentMsg", {
+                allMsg: s,
+                mapMsg: s
+              });
+            }
+          });
+        });
+      });
+    }, 1000);
   },
   methods: {
     baiduMap() {
-      var map = new BMap.Map("allmap", {
+      let that = this;
+      this.map = new BMap.Map("allmap", {
         minZoom: 8,
         maxZoom: 18,
         enableMapClick: false
       }); // 创建地图实例
       var point = new BMap.Point(this.lng, this.lat); // 创建点坐标
-      map.disableInertialDragging(); //禁用惯性拖拽
-      map.centerAndZoom(point, 15); // 初始化地图，设置中心点坐标和地图级别
-      map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
-      // map.setMapStyle({ style: "dark" }); //地图风格
-      map.setMapStyleV2({ styleJson: styleJson });
+      this.map.disableInertialDragging(); //禁用惯性拖拽
+      this.map.centerAndZoom(point, 15); // 初始化地图，设置中心点坐标和地图级别
+      this.map.disableDoubleClickZoom();
+      this.map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
+      // this.map.setMapStyle({ style: "dark" }); //地图风格
+      this.map.setMapStyleV2({ styleJson: styleJson });
 
       //多个点标注和火警数
       var points = [
@@ -122,7 +112,7 @@ export default {
         });
         marker.setLabel(label); //显示地理名称 a
         var content = points[i].data; //信息窗口信息
-        map.addOverlay(marker);
+        this.map.addOverlay(marker);
         addClickHandler(content, marker);
       }
       function addClickHandler(content, marker) {
@@ -134,21 +124,116 @@ export default {
         var p = e.target;
         var point = new BMap.Point(p.getPosition().lng, p.getPosition().lat);
         var infoWindow = new BMap.InfoWindow(content, opts); // 创建信息窗口对象
-        map.openInfoWindow(infoWindow, point); //开启信息窗口
+        this.map.openInfoWindow(infoWindow, point); //开启信息窗口
       }
-      //创建多边形
-      var polygon = new BMap.Polygon(
+    },
+    drawPolygon1() {
+      this.map.removeOverlay(this.polygon);
+      let that = this;
+      // 绘制之前先清除
+      this.polygon = new BMap.Polygon(
         this.showPolyonList.map(item => {
           return new BMap.Point(item.lng, item.lat);
         }),
-        { strokeColor: "blue", strokeWeight: 2, strokeOpacity: 0.5 }
+        {
+          fillColor: "red",
+          strokeColor: "blue",
+          strokeWeight: 2,
+          strokeOpacity: 0
+        }
       );
+      this.map.addOverlay(this.polygon);
 
-      map.addOverlay(polygon);
+      // 点击获取地图点坐标
+      this.map.addEventListener("dblclick", function(e) {
+        let point = e.point;
+        var result = BMapLib.GeoUtils.isPointInPolygon(point, that.polygon);
+        if (result) {
+          let region;
+          getKey("terrMsg").map(i => {
+            i.children.map(j => [
+              j.children.map(k => {
+                k.children.map(r => {
+                  region = r;
+                });
+              })
+            ]);
+          });
+          setKey("currentMsg", {
+            allMsg: region,
+            regionMsg: region,
+            mapMsg: getKey("currentMsg").mapMsg
+          });
+          that.$router.history.push("/index/home/region");
+        }
+      });
+    },
+    drawPolygon2() {
+      let that = this;
+      this.map.removeOverlay(this.polygon);
+
+      this.polygon = new BMap.Polygon(
+        this.showPolyonList.map(item => {
+          return new BMap.Point(item.lng, item.lat);
+        }),
+        {
+          fillColor: "blue",
+          strokeColor: "blue",
+          strokeWeight: 2,
+          strokeOpacity: 0
+        }
+      );
+      this.map.addOverlay(this.polygon);
+
+      // 点击获取地图点坐标
+      this.map.addEventListener("dblclick", function(e) {
+        let point = e.point;
+        var result = BMapLib.GeoUtils.isPointInPolygon(point, that.polygon);
+        if (result) {
+          let region;
+          getKey("terrMsg").map(i => {
+            i.children.map(j => [
+              j.children.map(k => {
+                k.children.map(r => {
+                  region = r;
+                });
+              })
+            ]);
+          });
+          setKey("currentMsg", {
+            allMsg: region,
+            regionMsg: region,
+            mapMsg: getKey("currentMsg").mapMsg
+          });
+          that.$router.history.push("/index/home/region");
+        }
+      });
+    },
+    changefillColor() {
+      if (getKey("currentMsg").mapMsg.fireNum > 0) {
+        // this.fillColor = "red";
+        this.drawPolygon1();
+
+        // console.log(getKey("currentMsg").mapMsg.fireNum);
+        // console.log(2222);
+        //      this.polygon = new BMap.Polygon(
+        //   this.showPolyonList.map(item => {
+        //     return new BMap.Point(item.lng, item.lat);
+        //   }),
+        //   { fillColor:this.fillColor,strokeColor: "blue", strokeWeight: 2, strokeOpacity: 0.3 }
+        // );
+        // this.map.addOverlay(this.polygon);
+      } else {
+        // console.log(1111111);
+        // console.log(getKey("currentMsg").mapMsg.fireNum);
+
+        // this.fillColor = "#00C1FF";
+        this.drawPolygon2();
+      }
     }
   },
-  destroyed() {
-    // timer=null
+  beforeDestroy() {
+    clearInterval(this.timer);
   }
 };
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div class="structureWrapper">
+  <div class="SystemStructureWrapper">
     <!-- 结构图组件 -->
     <div class="structureSearch">
       <el-input placeholder="请输入内容" suffix-icon="el-icon-search" v-model="structureSearch">
@@ -11,11 +11,11 @@
           <span class="custom-tree-node" slot-scope="{node,data}">
             <span class="buildIconWrapper">
               <img :src="data.iconUrl" alt="" class="buildIcon">
-              
-               <!-- <i :class="node.iconUrl"></i> -->
-              </span>
+
+              <!-- <i :class="node.iconUrl"></i> -->
+            </span>
             <span class="nodeText">{{node.label }}</span>
-            <span class="fireWarningNum">25</span>
+            <span class="fireWarningNum" v-show="fireNum">{{fireNum}}</span>
           </span>
         </el-tree>
       </div>
@@ -30,7 +30,8 @@
 <script>
 import { getOffset } from "@/utils/publictool";
 import { getKey, setKey } from "@/utils/local";
-import { listSelfFactoryRegionalByUserId } from "@/apis/home";
+// import { listSelfFactoryRegionalByUserId } from "@/apis/home";
+import { listSelfFactoryRegionalByUserId } from "@/apis/systemStructure";
 
 export default {
   data() {
@@ -89,161 +90,209 @@ export default {
       defaultProps: {
         children: "children",
         label: "label",
-        icon:'iconUrl'
+        icon: "iconUrl"
       },
       mask: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      showSystemContainer: false // tab切换
+      showSystemContainer: false, // tab切换
+      fireNum:false, //隐藏火警数
     };
   },
   created() {
-    // console.log(getKey("userInfor"));
     listSelfFactoryRegionalByUserId({ userId: getKey("userInfor").userId })
       .then(res => {
-        // console.log(res);
         if (res.httpStatus == 200) {
           this.structureData = res.result.map(item => {
-            let siteArray = item.sites.map(i => {
-              let areaArray = i.areas.map(k => {
-                let areaBuildsArray = k.areaBuilds.map(j => {
-                  let BuildsArray = j.builds.map(l => {
-                    let floorsArray = l.floors.map(m => {
-                      return {
-                        id: m.floorId,
-                        label: m.floorName,
-                        url: "/index/home/floor",
-                        showChildren: false,
-                        // floor: m.floorId,
-                        points: m.points,
-                        areaId: m.areaId,
-                        buildId: m.buildId,
-                        factoryId: m.factoryId,
-                        regionId: m.regionId,
-                        siteId: m.siteId,
-                        system: m.system,
-                        backgroundUrl: m.backgroundUrl,
-                        iconUrl: require("../../../assets/imgs/楼层.png")
-                      };
-                    });
-                    return {
-                      id: l.buildId,
-                      label: l.buildName,
-                      url: "/index/home/build",
-                      children: floorsArray,
-                      showChildren: true,
-                      build: l.buildId,
-                      buildId: l.buildId,
-                      regionId: l.regionId,
-                      areaId: l.areaId,
-                      factoryId: l.factoryId,
-                      siteId: l.siteId,
-                      points: l.points,
-                      backgroundUrl: l.backgroundUrl,
-                      iconUrl: require("../../../assets/imgs/楼栋.png")
-                    };
-                  });
+            let sites = item.sites.map(s => {
+              let builds = s.builds.map(b => {
+                let iotSystems = b.iotSystems.map(i => {
+                  switch (i.iotSystem) { // 如果为30则为水系统，绑定路由
+                    case 30:
+                      i.url = "/index/system/waterWarning";
+                      break;
+                  }
                   return {
-                    id: j.regionId,
-                    label: j.regionName,
-                    url: "/index/home/region",
-                    children: BuildsArray,
-                    region: j.regionId,
-                    regionId: j.regionId,
-                    areaId: j.areaId,
-                    factoryId: j.factoryId,
-                    siteId: j.siteId,
-                    points: j.points,
-                    backgroundUrl: j.backgroundUrl,
-                    iconUrl: require("../../../assets/imgs/分区.png")
+                    id: i.iotSystem,
+                    label: i.systemName,
+                    url: i.url,
+                    iconUrl: require("../../../assets/imgs/楼层.png")
                   };
                 });
                 return {
-                  id: k.areaId,
-                  label: k.areaName,
-                  url: "/index/home/map",
-                  children: areaBuildsArray,
-                  area: k.areaId,
-                  areaId: k.areaId,
-                  factoryId: k.factoryId,
-                  siteId: k.siteId,
-                  points: k.points,
-                  lat: k.lat,
-                  lon: k.lon,
-                  iconUrl: require("../../../assets/imgs/区域.png")
+                  id: b.buildId,
+                  label: b.buildName,
+                  children: iotSystems,
+                  iconUrl: require("../../../assets/imgs/楼栋.png")
                 };
               });
               return {
-                id: i.siteId,
-                label: i.siteName,
-                children: areaArray,
-                site: i.siteId,
-                factoryId: i.factoryId,
-                siteId: i.siteId,
-                iconUrl: require("../../../assets/imgs/站点.png")
+                id: s.siteId,
+                label: s.siteName,
+                children: builds,
+                iconUrl: require("../../../assets/imgs/分区.png")
               };
             });
             return {
               id: item.factoryId,
               label: item.name,
-              children: siteArray,
-              factoryId: item.factoryId,
-              iconUrl: require("../../../assets/imgs/build.png")
+              children: sites,
+              iconUrl: require("../../../assets/imgs/区域.png")
             };
           });
-        }
-        if (!getKey("currentMsg")) {
-          setKey("currentMsg", {
-            allMsg: this.structureData[0].children[0].children[3],
-            mapMsg: this.structureData[0].children[0].children[3]
-          });
-          this.clickNode(this.structureData[0].children[0].children[3]);
-        } else {
-          this.clickNode(this.structureData[0].children[0].children[3]);
         }
       })
       .catch(err => {
         console.log(err);
       });
+
+    // console.log(getKey("userInfor"));
+    // listSelfFactoryRegionalByUserId({ userId: getKey("userInfor").userId })
+    // .then(res => {
+    //   // console.log(res);
+    //   if (res.httpStatus == 200) {
+    //     this.structureData = res.result.map(item => {
+    //       let siteArray = item.sites.map(i => {
+    //         let areaArray = i.areas.map(k => {
+    //           let areaBuildsArray = k.areaBuilds.map(j => {
+    //             let BuildsArray = j.builds.map(l => {
+    //               let floorsArray = l.floors.map(m => {
+    //                 return {
+    //                   id: m.floorId,
+    //                   label: m.floorName,
+    //                   url: "/index/home/floor",
+    //                   showChildren: false,
+    //                   // floor: m.floorId,
+    //                   points: m.points,
+    //                   areaId: m.areaId,
+    //                   buildId: m.buildId,
+    //                   factoryId: m.factoryId,
+    //                   regionId: m.regionId,
+    //                   siteId: m.siteId,
+    //                   system: m.system,
+    //                   backgroundUrl: m.backgroundUrl,
+    //                   iconUrl: require("../../../assets/imgs/楼层.png")
+    //                 };
+    //               });
+    //               return {
+    //                 id: l.buildId,
+    //                 label: l.buildName,
+    //                 url: "/index/home/build",
+    //                 children: floorsArray,
+    //                 showChildren: true,
+    //                 build: l.buildId,
+    //                 buildId: l.buildId,
+    //                 regionId: l.regionId,
+    //                 areaId: l.areaId,
+    //                 factoryId: l.factoryId,
+    //                 siteId: l.siteId,
+    //                 points: l.points,
+    //                 backgroundUrl: l.backgroundUrl,
+    //                 iconUrl: require("../../../assets/imgs/楼栋.png")
+    //               };
+    //             });
+    //             return {
+    //               id: j.regionId,
+    //               label: j.regionName,
+    //               url: "/index/home/region",
+    //               children: BuildsArray,
+    //               region: j.regionId,
+    //               regionId: j.regionId,
+    //               areaId: j.areaId,
+    //               factoryId: j.factoryId,
+    //               siteId: j.siteId,
+    //               points: j.points,
+    //               backgroundUrl: j.backgroundUrl,
+    //               iconUrl: require("../../../assets/imgs/分区.png")
+    //             };
+    //           });
+    //           return {
+    //             id: k.areaId,
+    //             label: k.areaName,
+    //             url: "/index/home/map",
+    //             children: areaBuildsArray,
+    //             area: k.areaId,
+    //             areaId: k.areaId,
+    //             factoryId: k.factoryId,
+    //             siteId: k.siteId,
+    //             points: k.points,
+    //             lat: k.lat,
+    //             lon: k.lon,
+    //             iconUrl: require("../../../assets/imgs/区域.png")
+    //           };
+    //         });
+    //         return {
+    //           id: i.siteId,
+    //           label: i.siteName,
+    //           children: areaArray,
+    //           site: i.siteId,
+    //           factoryId: i.factoryId,
+    //           siteId: i.siteId,
+    //           iconUrl: require("../../../assets/imgs/站点.png")
+    //         };
+    //       });
+    //       return {
+    //         id: item.factoryId,
+    //         label: item.name,
+    //         children: siteArray,
+    //         factoryId: item.factoryId,
+    //         iconUrl: require("../../../assets/imgs/build.png")
+    //       };
+    //     });
+    //   }
+    // if (!getKey("currentMsg")) {
+    //   setKey("currentMsg", {
+    //     allMsg: this.structureData[0].children[0].children[3],
+    //     mapMsg: this.structureData[0].children[0].children[3]
+    //   });
+    //   this.clickNode(this.structureData[0].children[0].children[3]);
+    // } else {
+    //   this.clickNode(this.structureData[0].children[0].children[3]);
+    // }
+    // })
+    // .catch(err => {
+    //   console.log(err);
+    // });
   },
   methods: {
     //点击节点
     clickNode(a, b = {}, c) {
-    //   if (a.url) {
-    //     if (a.url == "/index/home/floor") {
-    //       setKey("currentMsg", {
-    //         allMsg: a,
-    //         floorMsg: a,
-    //         buildMsg: b.parent.data,
-    //         regionMsg: b.parent.parent.data,
-    //         mapMsg: b.parent.parent.parent.data
-    //       });
-    //     } else if (a.url == "/index/home/build") {
-    //       setKey("currentMsg", {
-    //         allMsg: a,
-    //         buildMsg: a,
-    //         regionMsg: b.parent.data,
-    //         mapMsg: b.parent.parent.data
-    //       });
-    //       setKey("currentMsg", {
-    //         allMsg: a,
-    //         buildMsg: a,
-    //         regionMsg: b.parent.data,
-    //         mapMsg: b.parent.parent.data
-    //       });
-    //     } else if (a.url == "/index/home/region") {
-    //       setKey("currentMsg", {
-    //         allMsg: a,
-    //         regionMsg: a,
-    //         mapMsg: b.parent.data
-    //       });
-    //     } else {
-    //       setKey("currentMsg", {
-    //         allMsg: a,
-    //         mapMsg: a
-    //       });
-    //     }
-    //     this.$router.history.push(a.url);
-    //   }
-      console.log(a, b, c);
+      if (a.url) {
+        // if (a.url == "/index/home/floor") {
+        //   setKey("currentMsg", {
+        //     allMsg: a,
+        //     floorMsg: a,
+        //     buildMsg: b.parent.data,
+        //     regionMsg: b.parent.parent.data,
+        //     mapMsg: b.parent.parent.parent.data
+        //   });
+        // } else if (a.url == "/index/home/build") {
+        //   setKey("currentMsg", {
+        //     allMsg: a,
+        //     buildMsg: a,
+        //     regionMsg: b.parent.data,
+        //     mapMsg: b.parent.parent.data
+        //   });
+        //   setKey("currentMsg", {
+        //     allMsg: a,
+        //     buildMsg: a,
+        //     regionMsg: b.parent.data,
+        //     mapMsg: b.parent.parent.data
+        //   });
+        // } else if (a.url == "/index/home/region") {
+        //   setKey("currentMsg", {
+        //     allMsg: a,
+        //     regionMsg: a,
+        //     mapMsg: b.parent.data
+        //   });
+        // } else {
+        //   setKey("currentMsg", {
+        //     allMsg: a,
+        //     mapMsg: a
+        //   });
+        // }
+        // this.$router.history.push(a.url);
+        this.$router.history.push(a.url);
+      }
+      // console.log("点击节点", a, b, c);
     }
   },
   mounted() {},
@@ -251,8 +300,8 @@ export default {
 };
 </script>
 
-<style lang="less" >
-.structureWrapper {
+<style lang="less">
+.SystemStructureWrapper {
   width: 100%;
   height: 100%;
   color: #fff;
@@ -323,7 +372,7 @@ export default {
           height: 20px;
           position: absolute;
           right: 22px;
-          top: 12px;
+          top: 22px;
           background-color: red;
           font-size: 12px;
           line-height: 20px;

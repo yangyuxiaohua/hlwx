@@ -21,6 +21,7 @@ import {
 // 设置默认请求的接口地址
 axios.defaults.baseURL = 'http://192.168.0.200:3221'
 // axios.defaults.baseURL = 'http://192.168.0.19:2221'
+// axios.defaults.baseURL = 'http://192.168.0.19:3221'
 axios.defaults.timeout = 6000
 
 // axios.defaults.withCredentials=true  //请求跨域的时候是否需要凭证

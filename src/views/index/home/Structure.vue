@@ -1,10 +1,10 @@
 <template>
   <div class="structureWrapper">
     <!-- 结构图组件 -->
-    <div class="structureTabHeader">
+    <!-- <div class="structureTabHeader">
       <div class="choseTissue chosedStructureTab">组织结构</div>
       <div class="choseSystem">系统结构</div>
-    </div>
+    </div> -->
     <div class="structureSearch">
       <el-input placeholder="请输入内容" suffix-icon="el-icon-search" v-model="structureSearch">
       </el-input>
@@ -15,11 +15,11 @@
           <span class="custom-tree-node" slot-scope="{node,data}">
             <span class="buildIconWrapper">
               <img :src="data.iconUrl" alt="" class="buildIcon">
-              
-               <!-- <i :class="node.iconUrl"></i> -->
-              </span>
+
+              <!-- <i :class="node.iconUrl"></i> -->
+            </span>
             <span class="nodeText">{{node.label }}</span>
-            <span class="fireWarningNum">25</span>
+            <span class="fireWarningNum" v-show="data.fireNum">{{data.fireNum}}</span>
           </span>
         </el-tree>
       </div>
@@ -42,171 +42,137 @@ export default {
       onNode: false, //点击节点展开
       indent: 26, // 相邻节点缩进距离
       structureSearch: "", //搜索单位
-      structureData: [
-        {
-          id: "0002121",
-          label: "新世纪环球中心",
-          children: [
-            {
-              id: "0002",
-              label: "东区写字楼",
-              children: [
-                {
-                  id: "0003",
-                  label: "东区N1"
-                }
-              ]
-            },
-            {
-              id: "0004",
-              label: "北区写字楼",
-              children: [
-                {
-                  id: "0005",
-                  label: "北区写字楼N1"
-                },
-                {
-                  id: "0006",
-                  label: "北区写字楼N1"
-                },
-                {
-                  id: "0007",
-                  label: "北区写字楼N1"
-                },
-                {
-                  id: "0008",
-                  label: "北区写字楼N1"
-                },
-                {
-                  id: "0009",
-                  label: "北区写字楼N1"
-                },
-                {
-                  id: "0000",
-                  label: "北区写字楼N1"
-                }
-              ]
-            }
-          ]
-        }
-      ],
+      structureData: [],
       defaultProps: {
         children: "children",
         label: "label",
-        icon:'iconUrl'
+        icon: "iconUrl"
       },
       mask: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      showSystemContainer: false // tab切换
+      showSystemContainer: false, // tab切换
+      timer: null
     };
   },
   created() {
+    this.getListSelfFactoryRegionalByUserId();
+    let that = this;
+    this.timer = setInterval(() => {
+      this.getListSelfFactoryRegionalByUserId();
+    }, 3000);
     // console.log(getKey("userInfor"));
-    listSelfFactoryRegionalByUserId({ userId: getKey("userInfor").userId })
-      .then(res => {
-        // console.log(res);
-        if (res.httpStatus == 200) {
-          this.structureData = res.result.map(item => {
-            let siteArray = item.sites.map(i => {
-              let areaArray = i.areas.map(k => {
-                let areaBuildsArray = k.areaBuilds.map(j => {
-                  let BuildsArray = j.builds.map(l => {
-                    let floorsArray = l.floors.map(m => {
-                      return {
-                        id: m.floorId,
-                        label: m.floorName,
-                        url: "/index/home/floor",
-                        showChildren: false,
-                        // floor: m.floorId,
-                        points: m.points,
-                        areaId: m.areaId,
-                        buildId: m.buildId,
-                        factoryId: m.factoryId,
-                        regionId: m.regionId,
-                        siteId: m.siteId,
-                        system: m.system,
-                        backgroundUrl: m.backgroundUrl,
-                        iconUrl: require("../../../assets/imgs/楼层.png")
-                      };
-                    });
-                    return {
-                      id: l.buildId,
-                      label: l.buildName,
-                      url: "/index/home/build",
-                      children: floorsArray,
-                      showChildren: true,
-                      build: l.buildId,
-                      buildId: l.buildId,
-                      regionId: l.regionId,
-                      areaId: l.areaId,
-                      factoryId: l.factoryId,
-                      siteId: l.siteId,
-                      points: l.points,
-                      backgroundUrl: l.backgroundUrl,
-                      iconUrl: require("../../../assets/imgs/楼栋.png")
-                    };
-                  });
-                  return {
-                    id: j.regionId,
-                    label: j.regionName,
-                    url: "/index/home/region",
-                    children: BuildsArray,
-                    region: j.regionId,
-                    regionId: j.regionId,
-                    areaId: j.areaId,
-                    factoryId: j.factoryId,
-                    siteId: j.siteId,
-                    points: j.points,
-                    backgroundUrl: j.backgroundUrl,
-                    iconUrl: require("../../../assets/imgs/分区.png")
-                  };
-                });
-                return {
-                  id: k.areaId,
-                  label: k.areaName,
-                  url: "/index/home/map",
-                  children: areaBuildsArray,
-                  area: k.areaId,
-                  areaId: k.areaId,
-                  factoryId: k.factoryId,
-                  siteId: k.siteId,
-                  points: k.points,
-                  lat: k.lat,
-                  lon: k.lon,
-                  iconUrl: require("../../../assets/imgs/区域.png")
-                };
-              });
-              return {
-                id: i.siteId,
-                label: i.siteName,
-                children: areaArray,
-                site: i.siteId,
-                factoryId: i.factoryId,
-                siteId: i.siteId,
-                iconUrl: require("../../../assets/imgs/站点.png")
-              };
-            });
-            return {
-              id: item.factoryId,
-              label: item.name,
-              children: siteArray,
-              factoryId: item.factoryId,
-              iconUrl: require("../../../assets/imgs/build.png")
-            };
-          });
-        }
-        if (!getKey("currentMsg")) {
-          setKey("currentMsg", {
-            allMsg: this.structureData[0].children[0].children[3],
-            mapMsg: this.structureData[0].children[0].children[3]
-          });
-          this.clickNode(this.structureData[0].children[0].children[3]);
-        } else {
-          this.clickNode(this.structureData[0].children[0].children[3]);
-        }
-      })
-      .catch(err => {
-        console.log(err);
-      });
+    // listSelfFactoryRegionalByUserId({ userId: getKey("userInfor").userId })
+    //   .then(res => {
+    //     console.log(res);
+    //     if (res.httpStatus == 200) {
+    //       this.structureData = res.result.map(item => {
+    //         let siteArray = item.sites.map(i => {
+    //           let areaArray = i.areas.map(k => {
+    //             let areaBuildsArray = k.areaBuilds.map(j => {
+    //               let BuildsArray = j.builds.map(l => {
+    //                 let floorsArray = l.floors.map(m => {
+    //                   return {
+    //                     id: m.floorId,
+    //                     label: m.floorName,
+    //                     url: "/index/home/floor",
+    //                     showChildren: false,
+    //                     // floor: m.floorId,
+    //                     points: m.points,
+    //                     areaId: m.areaId,
+    //                     buildId: m.buildId,
+    //                     factoryId: m.factoryId,
+    //                     regionId: m.regionId,
+    //                     siteId: m.siteId,
+    //                     system: m.system,
+    //                     backgroundUrl: m.backgroundUrl,
+    //                     iconUrl: require("../../../assets/imgs/楼层.png"),
+    //                     fireNum: m.fireNum
+    //                   };
+    //                 });
+    //                 return {
+    //                   id: l.buildId,
+    //                   label: l.buildName,
+    //                   url: "/index/home/build",
+    //                   children: floorsArray,
+    //                   showChildren: true,
+    //                   build: l.buildId,
+    //                   buildId: l.buildId,
+    //                   regionId: l.regionId,
+    //                   areaId: l.areaId,
+    //                   factoryId: l.factoryId,
+    //                   siteId: l.siteId,
+    //                   points: l.points,
+    //                   backgroundUrl: l.backgroundUrl,
+    //                   iconUrl: require("../../../assets/imgs/楼栋.png"),
+    //                   fireNum: l.fireNum
+    //                 };
+    //               });
+    //               return {
+    //                 id: j.regionId,
+    //                 label: j.regionName,
+    //                 url: "/index/home/region",
+    //                 children: BuildsArray,
+    //                 region: j.regionId,
+    //                 regionId: j.regionId,
+    //                 areaId: j.areaId,
+    //                 factoryId: j.factoryId,
+    //                 siteId: j.siteId,
+    //                 points: j.points,
+    //                 backgroundUrl: j.backgroundUrl,
+    //                 iconUrl: require("../../../assets/imgs/分区.png"),
+    //                 fireNum: j.fireNum
+    //               };
+    //             });
+    //             return {
+    //               id: k.areaId,
+    //               label: k.areaName,
+    //               url: "/index/home/map",
+    //               children: areaBuildsArray,
+    //               area: k.areaId,
+    //               areaId: k.areaId,
+    //               factoryId: k.factoryId,
+    //               siteId: k.siteId,
+    //               points: k.points,
+    //               lat: k.lat,
+    //               lon: k.lon,
+    //               iconUrl: require("../../../assets/imgs/区域.png"),
+    //               fireNum: k.fireNum
+    //             };
+    //           });
+    //           return {
+    //             id: i.siteId,
+    //             label: i.siteName,
+    //             children: areaArray,
+    //             site: i.siteId,
+    //             factoryId: i.factoryId,
+    //             siteId: i.siteId,
+    //             iconUrl: require("../../../assets/imgs/站点.png"),
+    //             fireNum: i.fireNum
+    //           };
+    //         });
+    //         return {
+    //           id: item.factoryId,
+    //           label: item.name,
+    //           children: siteArray,
+    //           factoryId: item.factoryId,
+    //           iconUrl: require("../../../assets/imgs/build.png"),
+    //           fireNum: item.fireNum
+    //         };
+    //       });
+    //       setKey("terrMsg", this.structureData);
+    //     }
+    //     if (!getKey("currentMsg")) {
+    //       setKey("currentMsg", {
+    //         allMsg: this.structureData[0].children[0].children[0],
+    //         mapMsg: this.structureData[0].children[0].children[0]
+    //       });
+    //       this.clickNode(this.structureData[0].children[0].children[0]);
+    //     } else {
+    //       // this.clickNode(this.structureData[0].children[0].children[0]);
+    //     }
+    //   })
+    //   .catch(err => {
+    //     console.log(err);
+    //   });
   },
   methods: {
     //点击节点
@@ -227,12 +193,12 @@ export default {
             regionMsg: b.parent.data,
             mapMsg: b.parent.parent.data
           });
-          setKey("currentMsg", {
-            allMsg: a,
-            buildMsg: a,
-            regionMsg: b.parent.data,
-            mapMsg: b.parent.parent.data
-          });
+          // setKey("currentMsg", {
+          //   allMsg: a,
+          //   buildMsg: a,
+          //   regionMsg: b.parent.data,
+          //   mapMsg: b.parent.parent.data
+          // });
         } else if (a.url == "/index/home/region") {
           setKey("currentMsg", {
             allMsg: a,
@@ -245,17 +211,144 @@ export default {
             mapMsg: a
           });
         }
-        this.$router.history.push(a.url);
+        if (a.url == this.$route.path) {
+          // console.log('同一级')
+          this.$router.go(0);
+        } else {
+          this.$router.history.push(a.url);
+        }
       }
       console.log(a, b, c);
+      // if(a.url ==this.$route.path){
+      //   this.$router.go(0)
+      // }
+    },
+    //获取树形菜单数据
+    getListSelfFactoryRegionalByUserId() {
+      listSelfFactoryRegionalByUserId({ userId: getKey("userInfor").userId })
+        .then(res => {
+          // console.log(res);
+          if (res.httpStatus == 200) {
+            this.structureData = res.result.map(item => {
+              let siteArray = item.sites.map(i => {
+                let areaArray = i.areas.map(k => {
+                  let areaBuildsArray = k.areaBuilds.map(j => {
+                    let BuildsArray = j.builds.map(l => {
+                      let floorsArray = l.floors.map(m => {
+                        return {
+                          id: m.floorId,
+                          label: m.floorName,
+                          url: "/index/home/floor",
+                          showChildren: false,
+                          // floor: m.floorId,
+                          points: m.points,
+                          areaId: m.areaId,
+                          buildId: m.buildId,
+                          factoryId: m.factoryId,
+                          regionId: m.regionId,
+                          siteId: m.siteId,
+                          system: m.system,
+                          backgroundUrl: m.backgroundUrl,
+                          iconUrl: require("../../../assets/imgs/楼层.png"),
+                          fireNum: m.fireNum
+                        };
+                      });
+                      return {
+                        id: l.buildId,
+                        label: l.buildName,
+                        url: "/index/home/build",
+                        children: floorsArray,
+                        showChildren: true,
+                        build: l.buildId,
+                        buildId: l.buildId,
+                        regionId: l.regionId,
+                        areaId: l.areaId,
+                        factoryId: l.factoryId,
+                        siteId: l.siteId,
+                        points: l.points,
+                        backgroundUrl: l.backgroundUrl,
+                        iconUrl: require("../../../assets/imgs/楼栋.png"),
+                        fireNum: l.fireNum
+                      };
+                    });
+                    return {
+                      id: j.regionId,
+                      label: j.regionName,
+                      url: "/index/home/region",
+                      children: BuildsArray,
+                      region: j.regionId,
+                      regionId: j.regionId,
+                      areaId: j.areaId,
+                      factoryId: j.factoryId,
+                      siteId: j.siteId,
+                      points: j.points,
+                      backgroundUrl: j.backgroundUrl,
+                      iconUrl: require("../../../assets/imgs/分区.png"),
+                      fireNum: j.fireNum
+                    };
+                  });
+                  return {
+                    id: k.areaId,
+                    label: k.areaName,
+                    url: "/index/home/map",
+                    children: areaBuildsArray,
+                    area: k.areaId,
+                    areaId: k.areaId,
+                    factoryId: k.factoryId,
+                    siteId: k.siteId,
+                    points: k.points,
+                    lat: k.lat,
+                    lon: k.lon,
+                    iconUrl: require("../../../assets/imgs/区域.png"),
+                    fireNum: k.fireNum
+                  };
+                });
+                return {
+                  id: i.siteId,
+                  label: i.siteName,
+                  children: areaArray,
+                  site: i.siteId,
+                  factoryId: i.factoryId,
+                  siteId: i.siteId,
+                  iconUrl: require("../../../assets/imgs/站点.png"),
+                  fireNum: i.fireNum
+                };
+              });
+              return {
+                id: item.factoryId,
+                label: item.name,
+                children: siteArray,
+                factoryId: item.factoryId,
+                iconUrl: require("../../../assets/imgs/build.png"),
+                fireNum: item.fireNum
+              };
+            });
+            setKey("terrMsg", this.structureData);
+          }
+          if (!getKey("currentMsg")) {
+            setKey("currentMsg", {
+              allMsg: this.structureData[0].children[0].children[0],
+              mapMsg: this.structureData[0].children[0].children[0]
+            });
+            this.clickNode(this.structureData[0].children[0].children[0]);
+          } else {
+            // this.clickNode(this.structureData[0].children[0].children[0]);
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        });
     }
   },
   mounted() {},
-  updated() {}
+  
+  beforeDestroy() {
+    clearInterval(this.timer);
+  }
 };
 </script>
 
-<style lang="less" >
+<style lang="less">
 .structureWrapper {
   width: 100%;
   height: 100%;
@@ -263,26 +356,26 @@ export default {
   margin: 0;
   display: flex;
   flex-direction: column;
-  .structureTabHeader {
-    width: 100%;
-    height: 52px;
-    line-height: 52px;
-    display: flex;
-    .choseTissue,
-    .choseSystem {
-      width: 50%;
-      background-color: #333a3c;
-      border-radius: 18px 18px 0 0;
-      cursor: pointer;
-      color: #d0d0d3;
-      text-align: center;
-      font-size: 20px;
-    }
-    .chosedStructureTab {
-      background-color: #5d616d;
-      color: #ecebef;
-    }
-  }
+  // .structureTabHeader {
+  //   width: 100%;
+  //   height: 52px;
+  //   line-height: 52px;
+  //   display: flex;
+  //   .choseTissue,
+  //   .choseSystem {
+  //     width: 50%;
+  //     background-color: #333a3c;
+  //     border-radius: 18px 18px 0 0;
+  //     cursor: pointer;
+  //     color: #d0d0d3;
+  //     text-align: center;
+  //     font-size: 20px;
+  //   }
+  //   .chosedStructureTab {
+  //     background-color: #5d616d;
+  //     color: #ecebef;
+  //   }
+  // }
   .structureSearch {
     width: 100%;
     height: 42px;

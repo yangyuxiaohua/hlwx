@@ -11,4 +11,6 @@ export const listSelfFactoryRegionalByUserId = params=>req.get('/region/listSelf
 export const pageFirstAlarmRecord = params=>req.post('/warning/record/pageFirstAlarmRecord',params)
 // 查询实时报警记录
 export const listRealTimeAlarmRecord = params=>req.post('/warning/record/listRealTimeAlarmRecord',params)
-
+// /warning/record/countFires
+// 查询用户火警数量
+export const countFires = params=>req.post('/warning/record/countFires',params)

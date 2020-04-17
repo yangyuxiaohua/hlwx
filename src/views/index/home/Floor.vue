@@ -7,7 +7,7 @@
     </div>
     <div id="imgBoxWrapper">
       <div id="imgBox" class="div-rows-col" @mousewheel="theZoom($event)">
-        <img src="@/assets/imgs/微信截图_20200218103048.png" alt="">
+        <img :src="bgcImg" alt="">
         <div id="iconBox">
           <img :src="item.icon" v-for="item in iconList" :key="item.id" :style="{left:item.x+'px',top:item.y+'px'}" class='equipIcon'>
         </div>
@@ -24,6 +24,7 @@ import { getOffset } from "@/utils/publictool.js";
 import { getKey } from "@/utils/local.js";
 import { listFireDevicesIcon, imgIp } from "@/apis/floor.js";
 import FloorBuild from "./FloorBuild";
+import { setInterval } from "timers";
 export default {
   components: {
     FloorBuild
@@ -40,7 +41,9 @@ export default {
       bgY: 0, //图片盒子在大盒子内的Y坐标
       currentIconX: 0,
       currentIconY: 0,
-      flag: false //控制两个拖动之间的影响
+      flag: false, //控制两个拖动之间的影响
+      bgcImg: "",
+      floorTimer: null
     };
   },
   created() {
@@ -49,6 +52,14 @@ export default {
     // }
     // console.log(getKey("currentMsg").allMsg.id);
     this.getIconList();
+    // 初始化背景图片
+    if (
+      getKey("currentMsg").floorMsg.backgroundUrl ||
+      getKey("currentMsg").floorMsg.backgroundUrl !== "null"
+    ) {
+      this.bgcImg = getKey("currentMsg").floorMsg.backgroundUrl;
+      // console.log(this.bgcImg)
+    }
   },
   mounted() {
     //初始化缩放比例
@@ -67,6 +78,10 @@ export default {
         that.bgY = that.bgY + that.endY - that.startY;
       }
     });
+    //定时请求图标列表
+    this.floorTimer = setInterval(function() {
+      that.getIconList();
+    }, 1000);
   },
   methods: {
     theZoom(e) {
@@ -150,7 +165,7 @@ export default {
   width: 100%;
   height: 100%;
   position: relative;
-   .videoWidget {
+  .videoWidget {
     width: 355px;
     height: 270px;
     position: absolute;

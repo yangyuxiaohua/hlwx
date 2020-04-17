@@ -1,5 +1,5 @@
 <template>
-  <div id="indexWrapper">
+  <div id="indexWrapper" @mouseover="autoPaly()">
     <div id="indexHeader">
       <div class="logo">
         <img src="../assets/imgs/logo.png" class="imgLogo">
@@ -12,22 +12,30 @@
       <div class="handleBtnList">
         <img src="../assets/imgs/shebei.png" alt="设备" title="设备">
         <img src="../assets/imgs/jihua.png" alt="计划" title="历史记录" @click="goToHistoryRecoding()">
-        <img src="../assets/imgs/xiaoxi.png" alt="消息" title="设置">
-        <img src="../assets/imgs/userInfor.png" alt="头像加载失败">
+        <img src="../assets/imgs/xiaoxi.png" alt="消息" title="设置" @click="palyAudio()" id="autoPlay">
+        <img src="../assets/imgs/userInfor.png" alt="头像加载失败" @click="stopAudio()">
       </div>
+      <audio loop muted autoplay id="audio">
+        <source src="@/assets/music/fireWarning.mp3"></audio>
     </div>
     <div id="indexContainer">
+      <!-- <keep-alive>
+        <router-view></router-view>
+      </keep-alive> -->
       <router-view></router-view>
     </div>
     <div class="routerView">
-      <div class="goTissue" @click="goHome('/index/home')" :class="{chosedTissue:goToChild==1}">组织结构</div>
-      <div class="goSystem" @click="goHome('/index/system')" :class="{chosedTissue:goToChild==2}">系统结构</div>
+      <div class="goTissue" @click="goHome('/index/home/map')" :class="{chosedTissue:goToChild==1}">组织结构</div>
+      <div class="goSystem" @click="goHome('/index/system/systemStatistical')" :class="{chosedTissue:goToChild==2}">系统结构</div>
     </div>
   </div>
 </template>
 
 <script>
-import inDexOfStr from "@/utils/publictool.js";
+import { inDexOfStr } from "@/utils/publictool.js";
+import { countFires } from "@/apis/home";
+import { getKey, setKey } from "@/utils/local.js";
+import { setInterval } from "timers";
 export default {
   components: {},
   data() {
@@ -36,23 +44,39 @@ export default {
       // indexContainerRightClass: "indexContainerRight1",
       // closeLeftImg: require("../assets/imgs/close.png"),
       // closeRightImg: require("../assets/imgs/open.png")
-      goToChild: 1
+      goToChild: 1,
+      fireVoiceTimer: null
     };
   },
   created() {
-    let str = this.$route.path;
-    if (str.indexOf("home") != -1) {
-      // console.log('主页')
+    if (inDexOfStr(this.$route.path, "home")) {
       this.goToChild = 1;
     } else {
       this.goToChild = 2;
     }
   },
   mounted() {
+    let that = this;
     // 去除浏览器默认事件
     document.oncontextmenu = function() {
       return false;
     };
+    // // 设置音频消音
+    // document.getElementById("palyAudio").click()
+    // document.getElementById("audio").muted = true;
+    // document.getElementById("audio").autopaly = true;
+    // console.log(document.getElementById("audio").muted);
+    // console.log(document.getElementById("audio").autopaly);
+    // console.log(document.getElementById("audio").play)
+    // 查询首火警
+    this.fireVoiceTimer = setInterval(function() {
+      that.getFireNum();
+      // that.autoPaly()
+    }, 1000);
+    // document.getElementById('audio')
+    // let audio = new Audio()
+    // audio.src = "@/assets/music/fireWarning.mp3"
+    // audio.play();
   },
   methods: {
     changeMenu(path) {
@@ -78,7 +102,7 @@ export default {
     //   }
     // }
     goHome(path) {
-      if (path == "/index/home") {
+      if (path == "/index/home/map") {
         this.goToChild = 1;
       } else {
         this.goToChild = 2;
@@ -94,7 +118,58 @@ export default {
       //   console.log('物联网')
       // }
       this.$router.push("/index/historyRecoding");
+    },
+    //开始播放
+    palyAudio() {
+      // this.stopAudio()
+      console.log("开始播放");
+      document.getElementById("audio").muted = false;
+      document.getElementById("audio").play();
+      // console.log(document.getElementById("audio").muted)
+    },
+    // 停止播放
+    stopAudio() {
+      console.log("停止播放");
+      // console.log(document.getElementById("audio").muted)
+      document.getElementById("audio").muted = true;
+
+      document.getElementById("audio").currentTime = 0;
+      document.getElementById("audio").pause();
+    },
+    //自动播放
+    autoPaly() {
+      // console.log(11111)
+      // document.getElementById("audio").muted = true;
+      // document.getElementById("audio").play();
+    },
+    // 查询火警数
+    getFireNum() {
+      countFires().then(res => {
+        // console.log(res);
+        if (res.httpStatus == 200) {
+          if (getKey("fireNum")) {
+            // countRows
+            if (res.result > getKey("fireNum")) {
+              this.palyAudio();
+            }
+            setKey("fireNum", res.result);
+          } else {
+            if (res.result > 0) {
+              this.palyAudio();
+              // console.log("有火警");
+            } else {
+              this.stopAudio();
+            }
+            setKey("fireNum", res.result);
+          }
+          // console.log(res);
+        }
+      });
     }
+  },
+  beforeDestroy() {
+    // timer=null
+    clearInterval(this.fireVoiceTimer);
   }
 };
 </script>
@@ -149,7 +224,9 @@ export default {
   }
   #indexContainer {
     flex: 1;
+    // height: 1030px;
     background-color: #141a3e;
+    // overflow: hidden;
   }
   .routerView {
     width: 355px;

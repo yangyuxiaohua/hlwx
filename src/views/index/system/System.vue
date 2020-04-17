@@ -23,18 +23,19 @@
             </div>
         </div>
         <div class="systemRight">
-            <SystemStatistical></SystemStatistical>
+            <!-- <SystemStatistical></SystemStatistical> -->
+            <router-view></router-view>
         </div>
     </div>
 </template>
 
 <script>
 import SystemStructure from "./SystemStructure";
-import SystemStatistical from "./SystemStatistical";
+// import SystemStatistical from "./SystemStatistical";
 export default {
   components: {
     SystemStructure,
-    SystemStatistical
+    // SystemStatistical
   },
   data() {
     return {
@@ -95,11 +96,11 @@ export default {
     margin-top: 52px;
     .systemTree {
       width: 100%;
-      height: 546px;
+      height: 554px;
     }
     .unitAndMessage {
       width: 100%;
-      height: 432px;
+      height: 424px;
       background-color: #262d2f;
       display: flex;
       flex-direction: column;

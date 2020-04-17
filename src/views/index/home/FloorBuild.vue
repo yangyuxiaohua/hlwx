@@ -1,7 +1,7 @@
 <template>
     <div id="buildRegionWrapper">
         <div id="buildRegionBox" @mousewheel="theZoom($event)">
-            <img src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1583733137772&di=05428e7b4019bc6010e565289bf030bd&imgtype=0&src=http%3A%2F%2Fimg2.xafc.com%2Fbuilding%2F20180115%2F5a5c3d0f906c2.jpg" alt="">
+            <img :src="bgcImg" alt="">
             <canvas id="can" :width="canvasW" :height="canvasH"></canvas>
         </div>
     </div>
@@ -36,7 +36,9 @@ export default {
       startY: 0,
       endX: 0,
       endY: 0,
-      bgcImg: ""
+      bgcImg: "",
+       floorBuildTimer:null,
+      fillColor:'#00C1FF'
     };
   },
   created() {
@@ -45,6 +47,22 @@ export default {
       getKey("currentMsg").buildMsg.points !== "null"
     ) {
       this.pointArr = getObjStr(getKey("currentMsg").buildMsg.points);
+       this.pointArr = this.pointArr.map(item=>{
+        // item.fireNum = 1
+        // console.log(item)
+        getKey("currentMsg").buildMsg.children.forEach(i=>{
+          if(item.floorId ==i.id){
+            item.fireNum = i.fireNum
+          }
+        })
+        return item
+      })
+    }
+    if (
+      getKey("currentMsg") &&
+      getKey("currentMsg").buildMsg.backgroundUrl !== "null"
+    ) {
+      this.bgcImg = getKey("currentMsg").buildMsg.backgroundUrl;
     }
   },
   mounted() {
@@ -66,11 +84,20 @@ export default {
       }
     });
     //初始化视图
-    this.drawctxSave();
+    // this.drawctxSave();
+    this.drawPolygon(this.pointArr)
+      // that.changefillColor();
+    // this.floorBuildTimer = setInterval(() => {
+    //   console.log('build')
+    //   that.changefillColor();
+    // }, 3000);
+    
   },
   updated() {
     this.$nextTick(function() {
-      this.drawctxSave(); //视图改变，马上触发
+      //视图改变，马上触发
+      this.drawPolygon(this.pointArr);
+      
     });
   },
   methods: {
@@ -82,22 +109,49 @@ export default {
       this.ctxSave.lineWidth = 2; //线条粗细
       this.ctxSave.fillStyle = "rgba(161,195,255,0.5)";
     },
-    //绘制
-    drawctxSave() {
-      if (this.pointArr.length > 0) {
-        this.ctxSave.clearRect(0, 0, this.canvasW, this.canvasH);
+    //绘制1
+    drawctxSave(pointArr=[]) {
+      if (pointArr.length > 0) {
+        // this.ctxSave.clearRect(0, 0, this.canvasW, this.canvasH);
         this.ctxSave.beginPath();
-        this.ctxSave.moveTo(this.pointArr[0].x, this.pointArr[0].y);
-        for (let i = 1; i < this.pointArr.length; i++) {
-          this.ctxSave.lineTo(this.pointArr[i].x, this.pointArr[i].y);
+        this.ctxSave.moveTo(pointArr[0].x, pointArr[0].y);
+        for (let i = 1; i < pointArr.length; i++) {
+          this.ctxSave.lineTo(pointArr[i].x, pointArr[i].y);
         }
         this.ctxSave.strokeStyle = "rgba(102,168,255,.5)"; //线条颜色
         this.ctxSave.lineWidth = 2; //线条粗细
-        this.ctxSave.fillStyle = "rgba(161,195,255,0.5)";
+        this.ctxSave.fillStyle = "#00C1FF";
         this.ctxSave.closePath();
         this.ctxSave.fill();
         this.ctxSave.stroke();
       }
+    },
+    //绘制2
+    drawctxSave2(pointArr=[]) {
+      if (pointArr.length > 0) {
+        // this.ctxSave.clearRect(0, 0, this.canvasW, this.canvasH);
+        this.ctxSave.beginPath();
+        this.ctxSave.moveTo(pointArr[0].x, pointArr[0].y);
+        for (let i = 1; i < pointArr.length; i++) {
+          this.ctxSave.lineTo(pointArr[i].x, pointArr[i].y);
+        }
+        this.ctxSave.strokeStyle = "rgba(102,168,255,.5)"; //线条颜色
+        this.ctxSave.lineWidth = 2; //线条粗细
+        this.ctxSave.fillStyle = "red";
+        this.ctxSave.closePath();
+        this.ctxSave.fill();
+        this.ctxSave.stroke();
+      }
+    },
+    // 绘制多个多边形
+    drawPolygon(pointArr=[]) {
+      pointArr.forEach(item => {
+          if(item.fireNum>0){
+            this.drawctxSave2(item.arr);
+          }else{
+            this.drawctxSave(item.arr);
+          }
+        });
     },
     //初始化小盒子居中
     initNs() {
@@ -129,7 +183,7 @@ export default {
       var p = e.wheelDelta / 1200;
       var ns = this.scaleSize;
       ns += p;
-      ns = ns < 1 ? 1 : ns > 10 ? 10 : ns; //可以缩小到0.1,放大到5倍
+      ns = ns < 0.5 ? 0.5 : ns > 10 ? 10 : ns; //可以缩小到0.1,放大到5倍
 
       //计算位置，以鼠标所在位置为中心
       //以每个点的x、y位置，计算其相对于图片的位置，再计算其相对放大后的图片的位置
@@ -145,16 +199,36 @@ export default {
       this.canvasH = this.imgBoxH * ns;
       // 处理放大之后的画布点数组
       this.pointArr = this.pointArr.map(item => {
-        item.y = item.y + item.y * (ns - this.scaleSize) / this.scaleSize;
-        item.x = item.x + item.x * (ns - this.scaleSize) / this.scaleSize;
-        return { x: item.x, y: item.y };
+       item.arr.map(i => {
+          i.y = i.y + i.y * (ns - this.scaleSize) / this.scaleSize;
+          i.x = i.x + i.x * (ns - this.scaleSize) / this.scaleSize;
+          return i;
+        });
+        return item;
       });
       img.top = this.bgY + "px";
       img.left = this.bgX + "px";
 
       // 放大之后重新绘制在ctxSave
       this.scaleSize = ns; //更新倍率
+    },
+     //根据火警变化颜色
+    changefillColor() {
+      if (getKey("currentMsg").buildMsg.fireNum > 0) {
+        this.fillColor = "red";
+        this.drawPolygon(this.pointArr);
+        console.log('build火警')
+      } else {
+        console.log('无build火警')
+        
+        this.fillColor = "#00C1FF";
+        this.drawPolygon(this.pointArr);
+      }
     }
+  },
+  beforeDestroy() {
+    // timer=null
+    clearInterval(this.floorBuildTimer);
   }
 };
 </script>
