@@ -52,34 +52,14 @@ export default {
       clickY: 0, //点击画布y坐标
       clickBuildId: [], // 点击画布得到的数据
       fillColor: "#00C1FF",
-      regionTimer: null
+      regionTimer: null,
+      regionId: "", //当前组件的id
+      regionFire: 0
     };
   },
   created() {
-    if (
-      getKey("currentMsg") &&
-      getKey("currentMsg").regionMsg.points !== "null"
-    ) {
-      this.pointArr = getObjStr(getKey("currentMsg").regionMsg.points);
-      this.pointArr = this.pointArr.map(item => {
-        // item.fireNum = 1
-        getKey("currentMsg").regionMsg.children.forEach(i => {
-          if (item.buildId == i.id) {
-            item.fireNum = i.fireNum;
-          }
-        });
-        return item;
-      });
-      console.log(getKey("terrMsg"));
-      console.log(this.pointArr);
-    }
-    // 初始化背景图片
-    if (
-      getKey("currentMsg").regionMsg.backgroundUrl ||
-      getKey("currentMsg").regionMsg.backgroundUrl !== "null"
-    ) {
-      this.bgcImg = getKey("currentMsg").regionMsg.backgroundUrl;
-    }
+    // console.log(getKey("currentMsg"));
+     this.init()
   },
   mounted() {
     this.initNs();
@@ -97,10 +77,39 @@ export default {
         that.bgY = that.bgY + that.endY - that.startY;
       }
     });
-    // this.regionTimer = setInterval(() => {
-
-    // }, 3000);
-    this.changeRegionFireNum();
+    this.regionTimer = setInterval(() => {
+      let realFire = 0,
+        realdata;
+      getKey("terrMsg").forEach(u => {
+        u.children.forEach(s => {
+          s.children.forEach(a => {
+            a.children.forEach(r => {
+              if (r.regionId == getKey("currentMsg").regionMsg.regionId) {
+                // console.log(r)
+                realFire = r.fireNum;
+                realdata = r;
+              }
+            });
+          });
+        });
+      });
+      if (that.regionFire != realFire) {
+        that.pointArr = getObjStr(getKey("currentMsg").regionMsg.points);
+        that.pointArr = that.pointArr.map(item => {
+          // item.fireNum = 1
+          // console.log(item)
+          realdata.children.forEach(i => {
+            if (item.buildId == i.buildId) {
+              item.fireNum = i.fireNum;
+            }
+          });
+          return item;
+        });
+        // console.log(that.pointArr)
+        that.drawPolygon(that.pointArr);
+        that.regionFire = realFire;
+      }
+    }, 1000);
     // console.log(getKey('currentMsg'))
     // console.log(getKey('fireNum'))
     //初始化视图
@@ -116,6 +125,33 @@ export default {
     });
   },
   methods: {
+    //初始化点位和图片
+    init() {
+      if (
+      getKey("currentMsg") &&
+      getKey("currentMsg").regionMsg.points !== "null"
+    ) {
+      this.regionId = getKey("currentMsg").regionMsg.regionId;
+      this.pointArr = getObjStr(getKey("currentMsg").regionMsg.points);
+      this.pointArr = this.pointArr.map(item => {
+        // item.fireNum = 1
+        getKey("currentMsg").regionMsg.children.forEach(i => {
+          if (item.buildId == i.id) {
+            item.fireNum = i.fireNum;
+          }
+        });
+        return item;
+      });
+      // console.log(this.pointArr);
+    }
+    // 初始化背景图片
+    if (
+      getKey("currentMsg").regionMsg.backgroundUrl ||
+      getKey("currentMsg").regionMsg.backgroundUrl !== "null"
+    ) {
+      this.bgcImg = getKey("currentMsg").regionMsg.backgroundUrl;
+    }
+    },
     initCanvas() {
       //初始化
       this.canSave = document.getElementById("canSave");
@@ -268,7 +304,7 @@ export default {
           ]);
         });
         setKey("currentMsg", {
-          allMsg: build,
+          // allMsg: build,
           buildMsg: build,
           regionMsg: getKey("currentMsg").regionMsg,
           mapMsg: getKey("currentMsg").mapMsg
@@ -283,25 +319,77 @@ export default {
       //  if(this.clickBuildId)
       //  if(this.clickMsg.length>0){
       //  }
-    },
-    //监听火警变化
-    changeRegionFireNum() {
-      console.log(getKey("terrMsg"));
-      getKey("terrMsg").map(u => {
-        u.children.map(s => {
-          s.children.map(a => {
-            a.children.map(r=>{
-              console.log(r)
-              console.log(getKey("currentMsg").regionMsg.regionId)
-            })
-          });
-        });
-      });
     }
+    //监听火警变化
+    // changeRegionFireNum() {
+    //   // console.log(getKey("terrMsg"));
+    //   getKey("terrMsg").map(u => {
+    //     u.children.map(s => {
+    //       s.children.map(a => {
+    //         a.children.map(r => {
+    //           // console.log(r)
+    //           // console.log(getKey("currentMsg").regionMsg.regionId);
+    //           // console.log(this.regionId);
+
+    //           // if (r.regionId == this.regionId) {
+    //           //   // console.log('拿到组件最新的数据')
+    //           //   console.log(r.fireNum);
+    //           //   console.log(getKey("currentMsg").regionMsg.fireNum);
+    //           //   // console.log(a)
+    //           //   // console.log(getObjStr(getKey("currentMsg").allMsg.points));
+    //           //   if (r.fireNum != getKey("currentMsg").regionMsg.fireNum) {
+    //           //     // console.log(r.fireNum);
+    //           //     console.log("火警数变化");
+    //           //     // console.log(getKey("currentMsg").regionMsg.fireNum);
+    //           //     // console.log(getKey("currentMsg").regionMsg.points);
+    //           //     this.pointArr = getObjStr(
+    //           //       getKey("currentMsg").regionMsg.points
+    //           //     ).map(item => {
+    //           //       console.log(item);
+    //           //       r.children.map(b => {
+    //           //         // console.log(getKey("currentMsg").regionMsg);
+    //           //         // console.log(b);
+    //           //         if (item.buildId == b.id) {
+    //           //           item.fireNum = i.fireNum;
+    //           //         }
+    //           //       });
+    //           //       return item;
+    //           //     });
+
+    //           //     setKey("currentMsg", {
+    //           //       allMsg: r,
+    //           //       mapMsg: a,
+    //           //       regionMsg: r
+    //           //     });
+    //           //     this.drawPolygon(this.pointArr);
+
+    //           //     // console.log(getObjStr(r.points));
+    //           //   }
+
+    //           //   // this.pointArr = r.points.map(item=>{
+
+    //           //   // })
+    //           //   // this.pointArr = r.points;
+    //           //   // this.pointArr = this.pointArr.map(item => {
+    //           //   //   // item.fireNum = 1
+    //           //   //   getKey("currentMsg").regionMsg.children.forEach(i => {
+    //           //   //     if (item.buildId == i.id) {
+    //           //   //       item.fireNum = i.fireNum;
+    //           //   //     }
+    //           //   //   });
+    //           //   //   return item;
+    //           //   // });
+    //           // }
+    //         });
+    //       });
+    //     });
+    //   });
+    // }
   },
   beforeDestroy() {
     // timer=null
     clearInterval(this.regionTimer);
+    this.buildRegionTimer = null;
   }
 };
 </script>

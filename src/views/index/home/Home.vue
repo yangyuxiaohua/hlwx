@@ -247,13 +247,20 @@ export default {
     getFirstFire(num) {
       pageFirstAlarmRecord({ index: num, size: 1 })
         .then(res => {
-          // console.log(res);
+          // console.log(res);we
           if (res.httpStatus == 200) {
             if (res.result.result.length > 0) {
               this.showFirstFire = true;
               this.showNoFirstFire = false;
               this.firstFire = res.result.result[0];
+              this.firstFire.alarmTime = getTime(this.firstFire.alarmTime)
               this.maxNum = res.result.pageNum;
+              // 如果火警数变化
+              // countFires().then(res => {
+              //   if (res.httpStatus == 200) {
+                    
+              //   }
+              // });
             }
           } else {
             this.showFirstFire = false;
@@ -273,7 +280,7 @@ export default {
       // "hlwxPlay:" + url;
       // console.log("hlwxPlay://" + url);
       // window.location.href("hlwxPlay://" + url)
-      location.href="hlwxPlay://" + url
+      location.href = "hlwxPlay://" + url;
     },
     //查询时时报警
     getListRealTimeAlarmRecord() {
@@ -354,27 +361,27 @@ export default {
         if (getKey("currentMsg").floorMsg) {
           // console.log("当前在楼层");
           this.$router.history.push("/index/home/build");
-          let { allMsg, buildMsg, regionMsg, mapMsg } = getKey("currentMsg");
+          let { buildMsg, regionMsg, mapMsg } = getKey("currentMsg");
           setKey("currentMsg", {
-            allMsg: buildMsg,
+            // allMsg: buildMsg,
             buildMsg: buildMsg,
             regionMsg: regionMsg,
             mapMsg: mapMsg
           });
         } else if (getKey("currentMsg").buildMsg) {
           this.$router.history.push("/index/home/region");
-          let { allMsg, regionMsg, mapMsg } = getKey("currentMsg");
+          let { regionMsg, mapMsg } = getKey("currentMsg");
           setKey("currentMsg", {
-            allMsg: regionMsg,
+            // allMsg: regionMsg,
             regionMsg: regionMsg,
             mapMsg: mapMsg
           });
           // console.log("当前在楼栋");
         } else if (getKey("currentMsg").regionMsg) {
           this.$router.history.push("/index/home/map");
-          let { allMsg, mapMsg } = getKey("currentMsg");
+          let { mapMsg } = getKey("currentMsg");
           setKey("currentMsg", {
-            allMsg: mapMsg,
+            // allMsg: mapMsg,
             mapMsg: mapMsg
           });
           // console.log("当前在分区");
@@ -393,7 +400,8 @@ export default {
 <style lang="less" scoped>
 .homeWrapper {
   width: 100%;
-  height: 100%;
+  height: 1030px;
+  overflow: hidden;
   display: flex;
   .left {
     flex: 0 0 355px;

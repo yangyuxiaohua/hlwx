@@ -7,7 +7,7 @@
     </div>
     <div id="imgBoxWrapper">
       <div id="imgBox" class="div-rows-col" @mousewheel="theZoom($event)">
-        <img :src="bgcImg" alt="">
+        <img :src="getImgUrl" alt="">
         <div id="iconBox">
           <img :src="item.icon" v-for="item in iconList" :key="item.id" :style="{left:item.x+'px',top:item.y+'px'}" class='equipIcon'>
         </div>
@@ -24,7 +24,7 @@ import { getOffset } from "@/utils/publictool.js";
 import { getKey } from "@/utils/local.js";
 import { listFireDevicesIcon, imgIp } from "@/apis/floor.js";
 import FloorBuild from "./FloorBuild";
-import { setInterval } from "timers";
+import { setInterval, clearInterval } from "timers";
 export default {
   components: {
     FloorBuild
@@ -34,6 +34,7 @@ export default {
       imgBoxW: 1000, //图片盒子宽
       imgBoxH: 600, //图片盒子高
       scaleSize: 1, //初始化缩放率
+      lastScaleSize: 1, //上一次的缩放
       bigBoxW: 0, //大盒子宽
       bigBoxH: 0, //大盒子高
       iconList: [], //cad内的图标位置信息
@@ -43,7 +44,7 @@ export default {
       currentIconY: 0,
       flag: false, //控制两个拖动之间的影响
       bgcImg: "",
-      floorTimer: null
+      timer: null
     };
   },
   created() {
@@ -53,13 +54,7 @@ export default {
     // console.log(getKey("currentMsg").allMsg.id);
     this.getIconList();
     // 初始化背景图片
-    if (
-      getKey("currentMsg").floorMsg.backgroundUrl ||
-      getKey("currentMsg").floorMsg.backgroundUrl !== "null"
-    ) {
-      this.bgcImg = getKey("currentMsg").floorMsg.backgroundUrl;
-      // console.log(this.bgcImg)
-    }
+    // this.init();
   },
   mounted() {
     //初始化缩放比例
@@ -79,12 +74,44 @@ export default {
       }
     });
     //定时请求图标列表
-    this.floorTimer = setInterval(function() {
-      that.getIconList();
+    this.timer = setInterval(function() {
+      if (getKey("currentMsg").floorMsg) {
+        that.getIconList();
+      } else {
+        clearInterval(that.timer);
+      }
     }, 1000);
   },
+  watch: {
+    getImgUrl: function(a, b) {
+      console.log(a, b);
+    }
+  },
+  computed: {
+    getImgUrl() {
+      if (
+        getKey("currentMsg").floorMsg.backgroundUrl ||
+        getKey("currentMsg").floorMsg.backgroundUrl !== "null"
+      ) {
+        this.bgcImg = getKey("currentMsg").floorMsg.backgroundUrl;
+        // console.log(this.bgcImg)
+      }
+      return this.bgcImg;
+    }
+  },
   methods: {
+    //初始化点位和图片
+    init() {
+      if (
+        getKey("currentMsg").floorMsg.backgroundUrl ||
+        getKey("currentMsg").floorMsg.backgroundUrl !== "null"
+      ) {
+        this.bgcImg = getKey("currentMsg").floorMsg.backgroundUrl;
+        // console.log(this.bgcImg)
+      }
+    },
     theZoom(e) {
+      // console.log(this.lastScaleSize);
       event.preventDefault();
 
       var $b = document.getElementById("imgBoxWrapper"), //大盒子
@@ -98,12 +125,15 @@ export default {
       x = x - l.left;
       y = y - l.top;
       var p = e.wheelDelta / 1200;
+      // var p = 0.1;
       var ns = this.scaleSize;
       ns += p;
       ns = ns < 1 ? 1 : ns > 10 ? 10 : ns; //可以缩小到0.1,放大到5倍
-
+      // this.lastScaleSize = this.scaleSize;
       //计算位置，以鼠标所在位置为中心
       //以每个点的x、y位置，计算其相对于图片的位置，再计算其相对放大后的图片的位置
+      // console.log(ns)
+      this.lastScaleSize = this.scaleSize;
       this.bgX =
         this.bgX - (x - this.bgX) * (ns - this.scaleSize) / this.scaleSize;
       this.bgY =
@@ -137,15 +167,20 @@ export default {
     // 获取图标列表
     getIconList() {
       listFireDevicesIcon({
-        floorId: getKey("currentMsg").allMsg.id
+        floorId: getKey("currentMsg").floorMsg.id
       })
         .then(res => {
           if (res.httpStatus == 200) {
             this.iconList = res.result.map(item => {
-              item.icon = imgIp + item.icon;
+              this.iconList.forEach(i => {
+                if (i.deviceId == item.deviceId) {
+                  item.x = i.x;
+                  item.y = i.y;
+                }
+              });
+                  item.icon = imgIp + item.icon;
               return item;
             });
-            // console.log(this.iconList)
           } else {
             this.$message({
               type: "warning",
@@ -158,6 +193,21 @@ export default {
         });
     }
   }
+  // beforeDestroy() {
+  //   let that = this;
+  //   // timer=null
+  //   console.log("组件即将被销毁");
+  //   clearInterval(that.timer);
+  //   this.timer = null;
+  //   //   clearInterval(this.timer);　　// 清除定时器
+  //   // this.timer = null;
+  // },
+  // destroyed() {
+  //   //全部清除方法
+  //   console.log("组件已经被销毁");
+  //   let that = this;
+  //   clearInterval();
+  // }
 };
 </script>
 <style lang="less" scoped>

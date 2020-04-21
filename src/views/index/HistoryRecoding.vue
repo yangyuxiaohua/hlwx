@@ -57,6 +57,9 @@ export default {
       historyCurrentNum: 10,
       historyCurrentPage: 1,
       historyList: [],
+      fireRecoding:{ 
+
+      }
       // isNeedAlarm: false, // 接警
       // isNeedAlarmNo: false
     };

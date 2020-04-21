@@ -1,10 +1,10 @@
 <template>
-    <div id="buildRegionWrapper">
-        <div id="buildRegionBox" @mousewheel="theZoom($event)">
-            <img :src="bgcImg" alt="">
-            <canvas id="can" :width="canvasW" :height="canvasH"></canvas>
-        </div>
+  <div id="buildRegionWrapper">
+    <div id="buildRegionBox" @mousewheel="theZoom($event)">
+      <img :src="bgcImg" alt="">
+      <canvas id="can" :width="canvasW" :height="canvasH"></canvas>
     </div>
+  </div>
 </template>
 
 <script>
@@ -13,6 +13,7 @@ import "webpack-jquery-ui";
 import "webpack-jquery-ui/css";
 import { getOffset, getObjStr } from "@/utils/publictool.js";
 import { getKey, setKey } from "@/utils/local.js";
+import { setInterval, clearInterval } from "timers";
 export default {
   data() {
     return {
@@ -37,33 +38,13 @@ export default {
       endX: 0,
       endY: 0,
       bgcImg: "",
-       floorBuildTimer:null,
-      fillColor:'#00C1FF'
+      floorBuildTimer: null,
+      fillColor: "#00C1FF",
+      buildFire: 0
     };
   },
   created() {
-    if (
-      getKey("currentMsg") &&
-      getKey("currentMsg").buildMsg.points !== "null"
-    ) {
-      this.pointArr = getObjStr(getKey("currentMsg").buildMsg.points);
-       this.pointArr = this.pointArr.map(item=>{
-        // item.fireNum = 1
-        // console.log(item)
-        getKey("currentMsg").buildMsg.children.forEach(i=>{
-          if(item.floorId ==i.id){
-            item.fireNum = i.fireNum
-          }
-        })
-        return item
-      })
-    }
-    if (
-      getKey("currentMsg") &&
-      getKey("currentMsg").buildMsg.backgroundUrl !== "null"
-    ) {
-      this.bgcImg = getKey("currentMsg").buildMsg.backgroundUrl;
-    }
+    this.init()
   },
   mounted() {
     this.initNs();
@@ -85,22 +66,82 @@ export default {
     });
     //初始化视图
     // this.drawctxSave();
-    this.drawPolygon(this.pointArr)
-      // that.changefillColor();
-    // this.floorBuildTimer = setInterval(() => {
-    //   console.log('build')
-    //   that.changefillColor();
-    // }, 3000);
-    
+    this.drawPolygon(this.pointArr);
+    // that.changefillColor();
+    this.floorBuildTimer = setInterval(function() {
+      // console.log(getKey("currentMsg").buildMsg.fireNum);
+      if (getKey("currentMsg").buildMsg && getKey("currentMsg").floorMsg) {
+        let realFire = 0,
+          realdata;
+        getKey("terrMsg").forEach(u => {
+          u.children.forEach(s => {
+            s.children.forEach(a => {
+              a.children.forEach(r => {
+                r.children.forEach(b => {
+                  // console.log(b);
+                  if (b.buildId == getKey("currentMsg").buildMsg.buildId) {
+                    realFire = b.fireNum;
+                    realdata = b;
+                    // this.bgcImg = b.backgroundUrl;
+                  }
+                });
+              });
+            });
+          });
+        });
+        if (that.buildFire != realFire) {
+          that.pointArr = getObjStr(getKey("currentMsg").buildMsg.points);
+          that.pointArr = that.pointArr.map(item => {
+            // item.fireNum = 1
+            // console.log(item)
+            realdata.children.forEach(i => {
+              if (item.floorId == i.id) {
+                item.fireNum = i.fireNum;
+              }
+            });
+            return item;
+          });
+          that.drawPolygon(that.pointArr);
+          that.buildFire = realFire;
+        }
+      } else {
+        clearInterval(that.floorBuildTimer);
+      }
+    }, 1000);
   },
   updated() {
     this.$nextTick(function() {
       //视图改变，马上触发
       this.drawPolygon(this.pointArr);
-      
     });
   },
   methods: {
+    //初始化点位和背景图
+    init() {
+      if (
+        getKey("currentMsg") &&
+        getKey("currentMsg").buildMsg.points !== "null"
+      ) {
+        this.buildFire = getKey("currentMsg").buildMsg.fireNum;
+        this.pointArr = getObjStr(getKey("currentMsg").buildMsg.points);
+        this.pointArr = this.pointArr.map(item => {
+          // item.fireNum = 1
+          // console.log(item)
+          getKey("currentMsg").buildMsg.children.forEach(i => {
+            if (item.floorId == i.id) {
+              item.fireNum = i.fireNum;
+            }
+          });
+          return item;
+        });
+      }
+      if (
+        getKey("currentMsg") &&
+        getKey("currentMsg").buildMsg.backgroundUrl !== "null"
+      ) {
+        this.bgcImg = getKey("currentMsg").buildMsg.backgroundUrl;
+      }
+    },
     //初始化
     initCanvas() {
       this.canSave = document.getElementById("can");
@@ -110,7 +151,7 @@ export default {
       this.ctxSave.fillStyle = "rgba(161,195,255,0.5)";
     },
     //绘制1
-    drawctxSave(pointArr=[]) {
+    drawctxSave(pointArr = []) {
       if (pointArr.length > 0) {
         // this.ctxSave.clearRect(0, 0, this.canvasW, this.canvasH);
         this.ctxSave.beginPath();
@@ -127,7 +168,7 @@ export default {
       }
     },
     //绘制2
-    drawctxSave2(pointArr=[]) {
+    drawctxSave2(pointArr = []) {
       if (pointArr.length > 0) {
         // this.ctxSave.clearRect(0, 0, this.canvasW, this.canvasH);
         this.ctxSave.beginPath();
@@ -144,14 +185,14 @@ export default {
       }
     },
     // 绘制多个多边形
-    drawPolygon(pointArr=[]) {
+    drawPolygon(pointArr = []) {
       pointArr.forEach(item => {
-          if(item.fireNum>0){
-            this.drawctxSave2(item.arr);
-          }else{
-            this.drawctxSave(item.arr);
-          }
-        });
+        if (item.fireNum > 0) {
+          this.drawctxSave2(item.arr);
+        } else {
+          this.drawctxSave(item.arr);
+        }
+      });
     },
     //初始化小盒子居中
     initNs() {
@@ -199,7 +240,7 @@ export default {
       this.canvasH = this.imgBoxH * ns;
       // 处理放大之后的画布点数组
       this.pointArr = this.pointArr.map(item => {
-       item.arr.map(i => {
+        item.arr.map(i => {
           i.y = i.y + i.y * (ns - this.scaleSize) / this.scaleSize;
           i.x = i.x + i.x * (ns - this.scaleSize) / this.scaleSize;
           return i;
@@ -211,24 +252,7 @@ export default {
 
       // 放大之后重新绘制在ctxSave
       this.scaleSize = ns; //更新倍率
-    },
-     //根据火警变化颜色
-    changefillColor() {
-      if (getKey("currentMsg").buildMsg.fireNum > 0) {
-        this.fillColor = "red";
-        this.drawPolygon(this.pointArr);
-        console.log('build火警')
-      } else {
-        console.log('无build火警')
-        
-        this.fillColor = "#00C1FF";
-        this.drawPolygon(this.pointArr);
-      }
     }
-  },
-  beforeDestroy() {
-    // timer=null
-    clearInterval(this.floorBuildTimer);
   }
 };
 </script>

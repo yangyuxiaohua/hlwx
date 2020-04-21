@@ -1,5 +1,5 @@
 <template>
-  <div id="indexWrapper" @mouseover="autoPaly()">
+  <div id="indexWrapper">
     <div id="indexHeader">
       <div class="logo">
         <img src="../assets/imgs/logo.png" class="imgLogo">
@@ -10,13 +10,17 @@
         <p>新世纪环球中心智慧消防 [监控中心]</p>
       </div>
       <div class="handleBtnList">
+        <img :src="soundImg" title="声音" @click="onSound()">
         <img src="../assets/imgs/shebei.png" alt="设备" title="设备">
         <img src="../assets/imgs/jihua.png" alt="计划" title="历史记录" @click="goToHistoryRecoding()">
         <img src="../assets/imgs/xiaoxi.png" alt="消息" title="设置" @click="palyAudio()" id="autoPlay">
         <img src="../assets/imgs/userInfor.png" alt="头像加载失败" @click="stopAudio()">
       </div>
-      <audio loop muted autoplay id="audio">
-        <source src="@/assets/music/fireWarning.mp3"></audio>
+      <audio loop id="audio">
+        <source :src="audioSrc">
+      </audio>
+     
+     
     </div>
     <div id="indexContainer">
       <!-- <keep-alive>
@@ -33,9 +37,9 @@
 
 <script>
 import { inDexOfStr } from "@/utils/publictool.js";
-import { countFires } from "@/apis/home";
+import { countFires, pageFirstAlarmRecord, getDevicesById } from "@/apis/home";
 import { getKey, setKey } from "@/utils/local.js";
-import { setInterval } from "timers";
+import { setInterval, clearInterval} from "timers";
 export default {
   components: {},
   data() {
@@ -45,7 +49,12 @@ export default {
       // closeLeftImg: require("../assets/imgs/close.png"),
       // closeRightImg: require("../assets/imgs/open.png")
       goToChild: 1,
-      fireVoiceTimer: null
+      fireVoiceTimer: null,
+      fireFloor: {}, //火警楼层
+      showPlay: true, // 用户确定使用火警铃声
+      audioSrc: require("../../public/static/music/fireWarning.mp3"),
+      soundImg: require("../assets/imgs/noSound.png"),
+      soundFlag:false, //控制是否出发播放函数
     };
   },
   created() {
@@ -61,26 +70,25 @@ export default {
     document.oncontextmenu = function() {
       return false;
     };
-    // // 设置音频消音
-    // document.getElementById("palyAudio").click()
-    // document.getElementById("audio").muted = true;
-    // document.getElementById("audio").autopaly = true;
-    // console.log(document.getElementById("audio").muted);
-    // console.log(document.getElementById("audio").autopaly);
-    // console.log(document.getElementById("audio").play)
+    
     // 查询首火警
     this.fireVoiceTimer = setInterval(function() {
       that.getFireNum();
-      // that.autoPaly()
     }, 1000);
-    // document.getElementById('audio')
-    // let audio = new Audio()
-    // audio.src = "@/assets/music/fireWarning.mp3"
-    // audio.play();
   },
   methods: {
     changeMenu(path) {
       this.$router.history.push(path);
+    },
+    //打开声音关闭声音
+    onSound() {
+      this.soundImg =
+        this.soundImg == require("../assets/imgs/noSound.png")
+          ? require("../assets/imgs/sound.png")
+          : require("../assets/imgs/noSound.png");
+      document.getElementById("audio").muted = true;
+      document.getElementById("audio").play();
+      this.soundFlag = true
     },
     // changeLeft() {
     //   //左右收起
@@ -122,25 +130,21 @@ export default {
     //开始播放
     palyAudio() {
       // this.stopAudio()
-      console.log("开始播放");
-      document.getElementById("audio").muted = false;
-      document.getElementById("audio").play();
+      // console.log("开始播放");
+      if(this.soundFlag){
+        document.getElementById("audio").muted = false;
+        document.getElementById("audio").play();
+      }
       // console.log(document.getElementById("audio").muted)
     },
     // 停止播放
     stopAudio() {
-      console.log("停止播放");
+      // console.log("停止播放");
       // console.log(document.getElementById("audio").muted)
       document.getElementById("audio").muted = true;
 
       document.getElementById("audio").currentTime = 0;
       document.getElementById("audio").pause();
-    },
-    //自动播放
-    autoPaly() {
-      // console.log(11111)
-      // document.getElementById("audio").muted = true;
-      // document.getElementById("audio").play();
     },
     // 查询火警数
     getFireNum() {
@@ -151,12 +155,14 @@ export default {
             // countRows
             if (res.result > getKey("fireNum")) {
               this.palyAudio();
+              this.toFirstFireFloor();
             }
             setKey("fireNum", res.result);
           } else {
             if (res.result > 0) {
               this.palyAudio();
               // console.log("有火警");
+              this.toFirstFireFloor();
             } else {
               this.stopAudio();
             }
@@ -165,9 +171,62 @@ export default {
           // console.log(res);
         }
       });
+    },
+    // 根据首火警查询楼层并跳转
+    toFirstFireFloor() {
+      pageFirstAlarmRecord({ index: 1, size: 1 })
+        .then(res => {
+          // console.log(res);
+          if (res.httpStatus == 200 && res.result.countRows > 0) {
+            getDevicesById({
+              deviceId: res.result.result[0].deviceId
+            })
+              .then(res => {
+                if (res.httpStatus == 200) {
+                  // console.log(res.result.floorId);
+                  // console.log(getKey("terrMsg"));
+                  getKey("terrMsg").forEach(u => {
+                    u.children.forEach(s => {
+                      s.children.forEach(a => {
+                        a.children.forEach(r => {
+                          r.children.forEach(b => {
+                            b.children.forEach(f => {
+                              // console.log(f.floorId)
+                              // console.log(res.result.floorId)
+                              if (f.id == res.result.floorId) {
+                                // console.log(f);
+                                // console.log(b);
+                                // console.log(r);
+                                // console.log(a);
+                                this.fireFloor = f;
+                                // console.log(this.fireFloor);
+                                setKey("currentMsg", {
+                                  floorMsg: f,
+                                  buildMsg: b,
+                                  regionMsg: r,
+                                  mapMsg: a
+                                });
+                                this.$router.history.push(f.url);
+                              }
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
+                }
+              })
+              .catch(err => {
+                console.log(err);
+              });
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        });
     }
   },
-  beforeDestroy() {
+  destroyed() {
     // timer=null
     clearInterval(this.fireVoiceTimer);
   }

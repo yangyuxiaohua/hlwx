@@ -14,7 +14,7 @@ import BMap from "BMap";
 import styleJson from "../../../../public/static/bmap/custom_map_config.json";
 import { getKey, setKey } from "@/utils/local";
 import { getObjStr } from "@/utils/publictool";
-import { setTimeout, setInterval } from "timers";
+import { clearInterval, setInterval } from "timers";
 export default {
   components: {},
   data() {
@@ -34,14 +34,7 @@ export default {
     };
   },
   created() {
-    if (
-      getKey("currentMsg").mapMsg.points &&
-      getKey("currentMsg").mapMsg.points !== "null"
-    ) {
-      this.showPolyonList = getObjStr(getKey("currentMsg").mapMsg.points);
-      this.lat = this.showPolyonList[0].lat;
-      this.lng = this.showPolyonList[0].lng;
-    }
+    this.init()
   },
   mounted() {
     this.baiduMap();
@@ -58,10 +51,6 @@ export default {
               } else {
                 that.drawPolygon2();
               }
-              setKey("currentMsg", {
-                allMsg: s,
-                mapMsg: s
-              });
             }
           });
         });
@@ -69,6 +58,18 @@ export default {
     }, 1000);
   },
   methods: {
+    //初始化点位和图片
+    init() {
+      if (
+        getKey("currentMsg").mapMsg.points &&
+        getKey("currentMsg").mapMsg.points !== "null"
+      ) {
+        this.showPolyonList = getObjStr(getKey("currentMsg").mapMsg.points);
+        this.lat = this.showPolyonList[0].lat;
+        this.lng = this.showPolyonList[0].lng;
+      }
+    },
+    //初始化地图
     baiduMap() {
       let that = this;
       this.map = new BMap.Map("allmap", {
@@ -160,7 +161,7 @@ export default {
             ]);
           });
           setKey("currentMsg", {
-            allMsg: region,
+            // allMsg: region,
             regionMsg: region,
             mapMsg: getKey("currentMsg").mapMsg
           });
@@ -201,7 +202,7 @@ export default {
             ]);
           });
           setKey("currentMsg", {
-            allMsg: region,
+            // allMsg: region,
             regionMsg: region,
             mapMsg: getKey("currentMsg").mapMsg
           });
@@ -211,29 +212,15 @@ export default {
     },
     changefillColor() {
       if (getKey("currentMsg").mapMsg.fireNum > 0) {
-        // this.fillColor = "red";
         this.drawPolygon1();
-
-        // console.log(getKey("currentMsg").mapMsg.fireNum);
-        // console.log(2222);
-        //      this.polygon = new BMap.Polygon(
-        //   this.showPolyonList.map(item => {
-        //     return new BMap.Point(item.lng, item.lat);
-        //   }),
-        //   { fillColor:this.fillColor,strokeColor: "blue", strokeWeight: 2, strokeOpacity: 0.3 }
-        // );
-        // this.map.addOverlay(this.polygon);
       } else {
-        // console.log(1111111);
-        // console.log(getKey("currentMsg").mapMsg.fireNum);
-
-        // this.fillColor = "#00C1FF";
         this.drawPolygon2();
       }
     }
   },
-  beforeDestroy() {
+  destroyed() {
     clearInterval(this.timer);
+    this.timer = null;
   }
 };
 </script>

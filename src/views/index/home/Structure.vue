@@ -179,8 +179,9 @@ export default {
     clickNode(a, b = {}, c) {
       if (a.url) {
         if (a.url == "/index/home/floor") {
+          console.log(a);
           setKey("currentMsg", {
-            allMsg: a,
+            // allMsg: a,
             floorMsg: a,
             buildMsg: b.parent.data,
             regionMsg: b.parent.parent.data,
@@ -188,7 +189,7 @@ export default {
           });
         } else if (a.url == "/index/home/build") {
           setKey("currentMsg", {
-            allMsg: a,
+            // allMsg: a,
             buildMsg: a,
             regionMsg: b.parent.data,
             mapMsg: b.parent.parent.data
@@ -201,24 +202,28 @@ export default {
           // });
         } else if (a.url == "/index/home/region") {
           setKey("currentMsg", {
-            allMsg: a,
+            // allMsg: a,
             regionMsg: a,
             mapMsg: b.parent.data
           });
         } else {
           setKey("currentMsg", {
-            allMsg: a,
+            // allMsg: a,
             mapMsg: a
           });
         }
         if (a.url == this.$route.path) {
-          // console.log('同一级')
-          this.$router.go(0);
+          console.log('同一级')
+          // this.$router.go(0);
+          // this.$forceUpdate() 
+          // console.log(b.parent.data.url)
+          // this.$router.history.push(b.parent.data.url);
+          // this.$router.history.push(a.url);
         } else {
+          }
           this.$router.history.push(a.url);
-        }
       }
-      console.log(a, b, c);
+      // console.log(a, b, c);
       // if(a.url ==this.$route.path){
       //   this.$router.go(0)
       // }
@@ -327,7 +332,7 @@ export default {
           }
           if (!getKey("currentMsg")) {
             setKey("currentMsg", {
-              allMsg: this.structureData[0].children[0].children[0],
+              // allMsg: this.structureData[0].children[0].children[0],
               mapMsg: this.structureData[0].children[0].children[0]
             });
             this.clickNode(this.structureData[0].children[0].children[0]);
@@ -341,7 +346,7 @@ export default {
     }
   },
   mounted() {},
-  
+
   beforeDestroy() {
     clearInterval(this.timer);
   }

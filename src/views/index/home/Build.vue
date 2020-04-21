@@ -49,39 +49,13 @@ export default {
       endY: 0,
       bgcImg: "",
       clickFloorId: "",
-      buildTimer:null,
-      fillColor:'#00C1FF'
+      buildTimer: null,
+      buildFire: 0,
+      fillColor: "#00C1FF"
     };
   },
   created() {
-    // if(this.$route.path =='/index/home/build'){
-    //   this.$router.history.push('/index/home/build/buildRegion')
-    // }
-    // console.log(getKey("currentMsg"));
-    if (
-      getKey("currentMsg") &&
-      getKey("currentMsg").buildMsg.points !== "null"
-    ) {
-       this.pointArr = getObjStr(getKey("currentMsg").buildMsg.points);
-      this.pointArr = this.pointArr.map(item=>{
-        // item.fireNum = 1
-        // console.log(item)
-        getKey("currentMsg").buildMsg.children.forEach(i=>{
-          if(item.floorId ==i.id){
-            item.fireNum = i.fireNum
-          }
-        })
-        return item
-      })
-    }
-    console.log(this.pointArr)
-    // 初始化背景图片
-    if (
-      getKey("currentMsg").buildMsg.backgroundUrl ||
-      getKey("currentMsg").buildMsg.backgroundUrl !== "null"
-    ) {
-      this.bgcImg = getKey("currentMsg").buildMsg.backgroundUrl;
-    }
+    this.init();
   },
   mounted() {
     this.initNs();
@@ -102,12 +76,40 @@ export default {
     //初始化视图
     // this.drawctxSave();
     this.drawPolygon(this.pointArr);
-      // that.changefillColor();
-    
-    // this.buildTimer = setInterval(() => {
-    //   console.log('build')
-    //   that.changefillColor();
-    // }, 3000);
+    // that.changefillColor();
+
+    this.buildTimer = setInterval(() => {
+      // console.log("build");
+      let realFire = 0,
+        realdata;
+      getKey("terrMsg").forEach(u => {
+        u.children.forEach(s => {
+          s.children.forEach(a => {
+            a.children.forEach(r => {
+              r.children.forEach(b => {
+                if (b.buildId == getKey("currentMsg").buildMsg.buildId) {
+                  realFire = b.fireNum;
+                  realdata = b;
+                }
+              });
+            });
+          });
+        });
+      });
+      if (that.buildFire != realFire) {
+        that.pointArr = getObjStr(getKey("currentMsg").buildMsg.points);
+        that.pointArr = that.pointArr.map(item => {
+          realdata.children.forEach(i => {
+            if (item.floorId == i.id) {
+              item.fireNum = i.fireNum;
+            }
+          });
+          return item;
+        });
+        that.drawPolygon(that.pointArr);
+        that.buildFire = realFire;
+      }
+    }, 1000);
   },
   updated() {
     this.$nextTick(function() {
@@ -115,7 +117,39 @@ export default {
       this.drawPolygon(this.pointArr);
     });
   },
+  watch: {
+    // pointArr: function(old, newData) {
+    //   console.log(old, newData);
+    // }
+  },
   methods: {
+    //初始化点位和图片
+    init() {
+      if (
+        getKey("currentMsg") &&
+        getKey("currentMsg").buildMsg.points !== "null"
+      ) {
+        this.pointArr = getObjStr(getKey("currentMsg").buildMsg.points);
+        this.pointArr = this.pointArr.map(item => {
+          // item.fireNum = 1
+          // console.log(item)
+          getKey("currentMsg").buildMsg.children.forEach(i => {
+            if (item.floorId == i.id) {
+              item.fireNum = i.fireNum;
+            }
+          });
+          return item;
+        });
+      }
+      // console.log(this.pointArr)
+      // 初始化背景图片
+      if (
+        getKey("currentMsg").buildMsg.backgroundUrl ||
+        getKey("currentMsg").buildMsg.backgroundUrl !== "null"
+      ) {
+        this.bgcImg = getKey("currentMsg").buildMsg.backgroundUrl;
+      }
+    },
     initCanvas() {
       //初始化
       this.canSave = document.getElementById("canSave");
@@ -181,7 +215,7 @@ export default {
         }
         this.ctxSave.strokeStyle = "rgba(102,168,255,.5)"; //线条颜色
         this.ctxSave.lineWidth = 2; //线条粗细
-        this.ctxSave.fillStyle = '#00C1FF';
+        this.ctxSave.fillStyle = "#00C1FF";
         this.ctxSave.closePath();
         this.ctxSave.fill();
         this.ctxSave.stroke();
@@ -198,7 +232,7 @@ export default {
         }
         this.ctxSave.strokeStyle = "rgba(102,168,255,.5)"; //线条颜色
         this.ctxSave.lineWidth = 2; //线条粗细
-        this.ctxSave.fillStyle = 'red';
+        this.ctxSave.fillStyle = "red";
         this.ctxSave.closePath();
         this.ctxSave.fill();
         this.ctxSave.stroke();
@@ -207,12 +241,12 @@ export default {
     // 绘制多个多边形
     drawPolygon(pointArr) {
       pointArr.forEach(item => {
-          if(item.fireNum>0){
-            this.drawctxSave2(item.arr);
-          }else{
-            this.drawctxSave(item.arr);
-          }
-        });
+        if (item.fireNum > 0) {
+          this.drawctxSave2(item.arr);
+        } else {
+          this.drawctxSave(item.arr);
+        }
+      });
     },
     //初始化小盒子居中
     initNs() {
@@ -259,7 +293,7 @@ export default {
           ]);
         });
         setKey("currentMsg", {
-          allMsg: floor,
+          // allMsg: floor,
           buildMsg: getKey("currentMsg").buildMsg,
           regionMsg: getKey("currentMsg").regionMsg,
           mapMsg: getKey("currentMsg").mapMsg,
@@ -267,8 +301,8 @@ export default {
         });
         this.$router.history.push("/index/home/floor");
       }
-    },
-     //根据火警变化颜色
+    }
+    //根据火警变化颜色
     // changefillColor() {
     //   if (getKey("currentMsg").buildMsg.fireNum > 0) {
     //     this.fillColor = "red";
@@ -276,15 +310,15 @@ export default {
     //     console.log('build火警')
     //   } else {
     //     console.log('无build火警')
-        
+
     //     this.fillColor = "#00C1FF";
     //     this.drawPolygon(this.pointArr);
     //   }
     // }
   },
-   beforeDestroy() {
-    // timer=null
-    clearInterval(this.regionTimer);
+  beforeDestroy() {
+    clearInterval(this.buildTimer);
+    this.timer = null;
   }
 };
 </script>
