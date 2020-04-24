@@ -9,7 +9,12 @@ Vue.use(VueRouter)
 
 const routes = [{
     path: '/',
-    name: ' login',
+    name: 'login',
+    component: Login,
+  },
+  {
+    path: '',
+    name: 'login',
     component: Login,
   },
   {
@@ -63,6 +68,11 @@ const routes = [{
         name: 'historyRecoding',
         component: () => import('@/views/index/HistoryRecoding')
       },
+      {
+        path: '/index/blank',
+        name: 'blank',
+        component: () => import('@/views/index/Blank')
+      },
       // {
       //   path: '/index/service',
       //   component: () => import('@/views/index/service/Service')
@@ -94,3 +104,4 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
+

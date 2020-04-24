@@ -204,7 +204,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 .historyRecodingWrapper {
   width: 100%;
   height: 100%;
@@ -261,6 +261,20 @@ export default {
         }
         .is_need_alarm {
           width: 200px;
+          .el-button{
+            padding: 0;
+            margin: 0;
+            width: 60px;
+            // height: 30px;
+            // line-height: 30px;
+            // padding:5px; 
+            span{
+              height: 30px;
+              line-height: 30px;
+              padding: 0;
+              margin: 0;
+            }
+          }
         }
       }
       .historyRecodingHeader {

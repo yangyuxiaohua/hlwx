@@ -23,7 +23,7 @@ export function setKey(key,value) {
 }
 
 export function removeKey(key) {
-  return sessionStorage.remove(key)
+  return sessionStorage.removeItem(key)
 }
 
 

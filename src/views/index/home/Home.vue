@@ -397,7 +397,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 .homeWrapper {
   width: 100%;
   height: 1030px;

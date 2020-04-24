@@ -34,7 +34,7 @@ export default {
     };
   },
   created() {
-    this.init()
+    this.init();
   },
   mounted() {
     this.baiduMap();
@@ -62,7 +62,7 @@ export default {
     init() {
       if (
         getKey("currentMsg").mapMsg.points &&
-        getKey("currentMsg").mapMsg.points !== "null"
+        getKey("currentMsg").mapMsg.points != "null"
       ) {
         this.showPolyonList = getObjStr(getKey("currentMsg").mapMsg.points);
         this.lat = this.showPolyonList[0].lat;
@@ -225,7 +225,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 #mapbox {
   width: 100%;
   height: 100%;

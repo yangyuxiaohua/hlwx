@@ -1,5 +1,5 @@
 <template>
-  <div class="login">
+  <div id="login">
     <!-- 登录表单 -->
     <el-form :model="loginForm" :rules="rules" size="small" status-icon ref="loginForm" class="login-form">
       <div class="title">
@@ -35,7 +35,7 @@
 // 引入请求接口的函数
 import { login, getUserInfor } from "@/apis/login";
 import { Message } from "element-ui";
-import { setKey } from "@/utils/local";
+import { setKey, removeKey } from "@/utils/local";
 export default {
   data() {
     return {
@@ -63,6 +63,7 @@ export default {
     };
   },
   created() {
+    removeKey("currentMsg");
     // 监听登录enter键
     // var _self = this;
     // document.onkeydown = function() {
@@ -82,7 +83,7 @@ export default {
 
     // 登录
     submitForm() {
-      console.log(this.loginForm);
+      // console.log(this.loginForm);
       if (this.loginFlag) {
         login(this.loginForm)
           .then(res => {
@@ -95,7 +96,7 @@ export default {
                   // console.log(res);
                   if (res.httpStatus == 200) {
                     setKey("userInfor", res.result);
-                    this.$router.history.push("/index/home/map");
+                    this.$router.history.push("/index/home");
                   }
                 })
                 .catch(err => {
@@ -120,7 +121,7 @@ export default {
 </script>
 
 <style lang="less">
-.login {
+#login {
   height: 100%;
   background-color: #2d3a4b;
   display: flex;
@@ -140,8 +141,11 @@ export default {
     .el-form-item {
       .el-input {
         border: none;
+        .el-input__inner{
+          background-color: #283443 !important;
+        }
         input {
-          background-color: #283443;
+          background-color: #283443 ;
           border: none;
           color: #fff;
         }
